@@ -48,7 +48,7 @@ function telegram_test_form($form, &$form_state) {
 }
 
 /**
- * Test form.
+ * Test form submit.
  */
 function telegram_test_form_submit($form, &$form_state) {
   drupal_set_message(t('Good try'));
