@@ -10,3 +10,46 @@
  * http://reyero.net
  * http://jmanuelguerrero.com
  */
+
+/**
+ * Implements hook_menu().
+ */
+ function telegram_menu() {
+   $items['telegram/test'] = array(
+     'title' => t('Telegram Test'),
+     'page callback' => 'drupal_get_form',
+     'page arguments' => array('telegram_test_form'),
+     'access arguments' => array('administer site configuration'),
+   );
+   $items['admin/config/telegram'] = array(
+     'title' => t('Telegram Settings'),
+     'page callback' => 'drupal_get_form',
+     'page arguments' => array('variable_module_form', 'telegram'),
+     'access arguments' => array('administer site configuration'),
+   );
+   return $items;
+}
+
+
+/**
+ * Test form.
+ */
+function telegram_test_form($form, &$form_state) {
+  $form['number'] = array(
+    '#title' => t('To'),
+    '#type' => 'textfield',
+    '#size' => 20,
+  );
+  $form['text'] = array(
+    '#title' => 'text',
+    '#type' => 'textarea',
+  );
+  return $form;
+}
+
+/**
+ * Test form.
+ */
+function telegram_test_form_submit($form, &$form_state) {
+  drupal_set_message(t('Good try'));
+}
