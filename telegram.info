@@ -1,4 +1,4 @@
 name = Telegram
 description = Telegram
 core = 7.x
-package = Devel
+package = Development
