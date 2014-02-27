@@ -80,9 +80,9 @@ class TelegramClient {
    * Get list of current dialogs.
    */
   function getDialogList() {
-    $process = $this->getProcess();
-    if ($process && $process->execCommand('dialog_list')) {
-      return $process->parseResponse();
+    if ($this->execCommand('dialog_list')) {
+      // @todo Add the right regexp format for the response.
+      return $this->parseResponse();
     }
   }
 
@@ -97,10 +97,25 @@ class TelegramClient {
    *   Optional regex to parse the response.
    *   None if we don't need a response.
    */
-  function execCommand($command, $args = NULL) {
+  protected function execCommand($command, $args = NULL) {
     // Make sure process is started.
     if ($process = $this->getProcess()) {
       return $process->execCommand($command, $args);
+    }
+  }
+
+  /**
+   * Parse process response.
+   *
+   * @param $pattern
+   *   Regexp with the response format.
+   *
+   * @return array|NULL
+   *   Response array if any.
+   */
+  protected function parseResponse($pattern = NULL) {
+     if ($process = $this->getProcess()) {
+      return $process->parseResponse($pattern);
     }
   }
 
