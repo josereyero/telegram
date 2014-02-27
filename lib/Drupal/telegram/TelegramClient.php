@@ -7,24 +7,53 @@
 
 namespace Drupal\telegram;
 
+use \streamWrapper;
+
 class TelegramClient {
 
+  // Regexps to parse response elements.
+  const RX_USER = '[\w\s]+'; // Jose Reyero
+  const RX_DATE = '\[[\w\s\:]\]'; // [20 Feb], [15:19]
+  const RX_PENDING = '\d+\sunread'; // 0 unread
+
   // Running parameters.
-  protected $commandLine;
+  protected $command;
+  protected $keyfile;
 
   // Running process
   protected $process;
-  // Pipes for input / output streams
-  protected $pipes;
-  // Output history.
-  protected $output = array();
 
-  // Contact list array.
+
+  protected $logs = array();
+
+  // Debug level
+  protected $debug = 1;
+
   /**
    * Class constructor.
    */
   public function __construct($command = '/usr/local/bin/telegram', $keyfile = '/etc/telegram/server.pub') {
-    $this->commandLine = $command . ' -k ' . $keyfile;
+    $this->command = $command;
+    $this->keyfile = $keyfile;
+  }
+
+
+  /**
+   * Send message to phone number.
+   */
+  public function sendPhone($phone, $message) {
+    $contacts = $this->getContactList();
+    // @todo find peer name by contact.
+    return $this->msg($peer, $message);
+  }
+
+  /**
+   * Send message to peer.
+   */
+  public function sendMessage($peer, $message) {
+    $output = $this->execCommand('msg ' . $peer . ' ' . $message);
+    // @todo Parse output and get success / failure.
+    return TRUE;
   }
 
   /**
@@ -39,7 +68,6 @@ class TelegramClient {
       $output = $this->execCommand('contact_list');
       // Multiple lines of the form:
       // User #12345678: User Name (User_Name 341233444)....
-      // print $output;
       foreach (explode("\n", $output) as $line) {
         $line = trim($line);
         $this->contacts[] = $line;
@@ -49,89 +77,79 @@ class TelegramClient {
   }
 
   /**
-   * Get raw output form command history.
+   * Get list of current dialogs.
    */
-  function getRawOutput() {
-    return $this->output;
+  function getDialogList() {
+    if ($process->execCommand('dialog_list')) {
+      $process->parseResponse();
+    }
   }
+
   /**
    * Low level exec function.
+   *
+   * @param $command
+   *   Command key
+   * @param $args
+   *   Command arguments.
+   * @param $parse_response
+   *   Optional regex to parse the response.
+   *   None if we don't need a response.
    */
-  function execCommand($command) {
+  function execCommand($command, $args = NULL) {
     // Make sure process is started.
-    $this->startProcess();
-    // Flush output ?
-    // Run command.
-    $this->writeString($command);
-    // Give it some time, 1 sec.
-    sleep(1);
-    $string = $this->readString();
-    // Filter control codes in output
-    //$string = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x80-\x9F]/u', '', $string);
-    return $string;
-  }
-
-  /**
-   * Low level write (adds line end).
-   */
-  function writeString($string) {
-    fwrite($this->pipes[0], $string . "\n");
-  }
-
-  /**
-   * Low level read.
-   */
-  function readString() {
-    $string = '';
-    while(!isset($info) || $info['unread_bytes']) {
-      $string .= fgetc($this->pipes[1]);
-      $info = stream_get_meta_data($this->pipes[1]);
+    if ($process = $this->getProcess()) {
+      return $process->execCommand($command, $args);
     }
-    $this->output[] = $string;
-    return $string;
   }
 
   /**
    * Start process.
    */
-  function startProcess() {
-    if (!isset($this->pipes)) {
-      $this->pipes = array();
-      $cwd = '/tmp';
-      $descriptorspec = array(
-         0 => array("pipe", "r"),  // stdin is a pipe that the child will read from
-         1 => array("pipe", "w"),  // stdout is a pipe that the child will write to
-         2 => array("file", '/tmp/telegram-error.txt', "a") // stderr is a file to write to
-      );
-      $this->process = proc_open($this->commandLine, $descriptorspec, $this->pipes, $cwd);
-      // Flush initial message.
-      $this->readString();
+  function getProcess() {
+    if (!isset($this->process)) {
+      $this->start();
     }
-    return is_resource($this->process);
+    return $this->process;
+  }
+
+  /**
+   * Start process.
+   */
+  function start() {
+    $this->process = new TelegramProcess($this->command, $this->keyfile, $this->debug);
+    $this->process->start();
+    sleep(1);
   }
 
   /**
    * Exit process (send quit command).
    */
-  function exitProcess() {
+  function stop() {
     if (isset($this->process)) {
-      $this->writeString('quit');
-      fclose($this->pipes[1]);
-      fclose($this->pipes[0]);
-      $return = proc_close($this->process);
+      $this->process->close();
       unset($this->process);
-      return $return;
     }
   }
 
   /**
-   * 
+   * Log line in output.
+   */
+  function log($message) {
+    //$this->output[] = $message;
+    if ($this->debug) {
+      print $message . "\n";
+    }
+  }
+
+  /**
+   *
    * Parser for contact_list lines
    * return @array
    */
   function ParseContactList($cadena)
     {
-	  $replace = array('(', ')', '[', ']', ':', '"', '#','.');        
+	  $replace = array('(', ')', '[', ']', ':', '"', '#','.');
 	  $idinit = strpos($cadena, '#')+1;
 	  $idend = strpos($cadena, ':');
 	  $cnameend = strpos($cadena, '(');
@@ -141,7 +159,7 @@ class TelegramClient {
 	  $statusend = strpos($cadena, '.');
 	  $lastcondinit = strpos($cadena, '[');
 	  $lastconhend = strpos($cadena, ']');
-	  $linea['usid'] = substr($cadena, $idinit, $idend-$idinit);        
+	  $linea['usid'] = substr($cadena, $idinit, $idend-$idinit);
 	  $linea['cname'] =  substr($cadena, $idend+2, $cnameend-$idend-2);
 	  sscanf ($cnameocon, '%s %s', $linea['cnameo'], $linea['number'] );
 	  $linea['lastcond'] = substr($cadena, $lastcondinit+1, 10);
