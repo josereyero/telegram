@@ -80,8 +80,9 @@ class TelegramClient {
    * Get list of current dialogs.
    */
   function getDialogList() {
-    if ($process->execCommand('dialog_list')) {
-      $process->parseResponse();
+    $process = $this->getProcess();
+    if ($process && $process->execCommand('dialog_list')) {
+      return $process->parseResponse();
     }
   }
 

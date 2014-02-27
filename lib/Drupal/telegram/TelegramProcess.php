@@ -93,6 +93,16 @@ class TelegramProcess {
   }
 
   /**
+   * Parse response and return.
+   */
+  function parseResponse() {
+    if (!isset($this->output)) {
+      $this->getResponse();
+    }
+    return $this->output;
+  }
+
+  /**
    * Read multiple lines.
    */
   function read() {
