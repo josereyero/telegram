@@ -124,4 +124,30 @@ class TelegramClient {
     }
   }
 
+  /**
+   * 
+   * Parser for contact_list lines
+   * return @array
+   */
+  function ParseContactList($cadena)
+    {
+	  $replace = array('(', ')', '[', ']', ':', '"', '#','.');        
+	  $idinit = strpos($cadena, '#')+1;
+	  $idend = strpos($cadena, ':');
+	  $cnameend = strpos($cadena, '(');
+	  $cnameoend = strpos($cadena, ')');
+	  $cnameocon = str_replace($replace, '', substr($cadena, $cnameend, $cnameoend));
+	  $statusinit = strpos($cadena, ')');
+	  $statusend = strpos($cadena, '.');
+	  $lastcondinit = strpos($cadena, '[');
+	  $lastconhend = strpos($cadena, ']');
+	  $linea['usid'] = substr($cadena, $idinit, $idend-$idinit);        
+	  $linea['cname'] =  substr($cadena, $idend+2, $cnameend-$idend-2);
+	  sscanf ($cnameocon, '%s %s', $linea['cnameo'], $linea['number'] );
+	  $linea['lastcond'] = substr($cadena, $lastcondinit+1, 10);
+	  $linea['lastconh'] = substr($cadena, $lastcondinit+11, 9);
+	  $this->contacts[] = $linea;
+	  return $this->$linea;
+  }
+
 }
