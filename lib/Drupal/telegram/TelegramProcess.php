@@ -123,7 +123,6 @@ class TelegramProcess {
           // Yeah, line matches expected format.
           // First add it to result.
           $result[] = array(
-            'line' => $line,
             'matches' => $matches,
           );
           // Remove it from buffer.

@@ -67,17 +67,20 @@ class TelegramClient {
    *   Contacts indexed by phone number.
    */
   function getContactList() {
-    if (!isset($this->contacts)) {
-      $this->contacts = array();
-      $output = $this->execCommand('contact_list');
+    //if (!isset($this->contacts)) {
+     // $this->contacts = array();
+      //$output = $this->execCommand('contact_list');
       // Multiple lines of the form:
       // User #12345678: User Name (User_Name 341233444)....
-      $response = $this->parseResponse('/^User\s\#(\d+)\:\s([\w\s]+)\s.*/');
+      ///$response = $this->parseResponse('/^User\s\#(\d+)\:\s([\w\s]+)\s.*/');
       // Response should be an array....?
       // @todo Put that array in contacts with the right format
-
-    }
-    return $this->contacts;
+		if ($this->execCommand('contact_list'))
+		  {
+    //}
+    //return $this->contacts;
+    	    return $this->parseResponse('/^User\s\#(\w+)\:\s(\w+)\s\((\w+)\s(\w+)\)\s(\w+)\.\s(\w+\s\w+)\s\[(\w+\/\w+\/\w+)\s(\w+\:\w+\:\w+)\]/');
+		  }
   }
 
   /**
@@ -90,6 +93,15 @@ class TelegramClient {
     }
   }
 
+  /**
+   * Add contact  
+   */
+  function AddContact($phone, $fname, $sname) {
+  	$output = $this->execCommand('add_contact ' . $phone . ' ' .  $fname . ' ' . $sname);
+  	 // @TODO test the exit of the command	
+  	return TRUE;
+  }
+  
   /**
    * Low level exec function.
    *
