@@ -116,10 +116,11 @@ class TelegramClient {
    */
   protected function parseResponse($pattern = NULL) {
      if ($process = $this->getProcess()) {
-     	if (if (preg_match('/^User\s\#(\d+)\:\s([\w\s]+)\s.*/', $mensage[$i])))
-     	{
-     		ParseContactList($process);	
-     	}
+       if (preg_match('/^User\s\#(\d+)\:\s([\w\s]+)\s.*/', $mensage[$i])))
+     	  {
+     	    ParseContactList($process);	
+     	  }
+     	
       return $process->parseResponse($pattern);
     }
   }
