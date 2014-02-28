@@ -86,7 +86,7 @@ class TelegramClient {
   function getDialogList() {
     if ($this->execCommand('dialog_list')) {
       // @todo Add the right regexp format for the response.
-      return $this->parseResponse();
+      return $this->parseResponse('/^User\s([\w\s]+)\:\s(\d+)\s(\w+)$/u');
     }
   }
 
