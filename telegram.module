@@ -16,15 +16,24 @@ use Drupal\telegram\DrupalTelegramClient;
 /**
  * Implements hook_menu().
  */
- function telegram_menu() {
-   $items['telegram/test'] = array(
-     'title' => t('Telegram Test'),
+function telegram_menu() {
+   $items['admin/config/telegram/test'] = array(
+     'title' => t('Test'),
      'page callback' => 'drupal_get_form',
      'page arguments' => array('telegram_test_form'),
      'access arguments' => array('administer site configuration'),
      'file' => 'telegram.admin.inc',
    );
    $items['admin/config/telegram'] = array(
+     'title' => t('Telegram'),
+     'access arguments' => array('administer site configuration'),
+     'position' => 'right',
+     'page callback' => 'system_admin_menu_block_page',
+     'access arguments' => array('access administration pages'),
+     'file' => 'system.admin.inc',
+     'file path' => drupal_get_path('module', 'system'),
+   );
+   $items['admin/config/telegram/settings'] = array(
      'title' => t('Telegram Settings'),
      'page callback' => 'drupal_get_form',
      'page arguments' => array('variable_module_form', 'telegram'),
@@ -54,11 +63,12 @@ function telegram_client() {
   static $client;
 
   if (!isset($slient)) {
-    $client = new DrupalTelegramClient(
-        variable_get_value('telegram_command_exec'),
-        variable_get_value('telegram_command_key'),
-        variable_get_value('telegram_command_debut')
-    );
+    $client = new DrupalTelegramClient(array(
+      'command' => variable_get_value('telegram_command_exec'),
+      'keyfile' => variable_get_value('telegram_command_key'),
+      'homepath' => variable_get_value('telegram_command_cwd'),
+      'debug' => variable_get_value('telegram_command_debug')
+    ));
   }
 
   return $client;

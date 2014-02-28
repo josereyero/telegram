@@ -34,9 +34,8 @@ class DrupalTelegramClient extends TelegramClient {
    *
    * @todo Remove
    */
-  public function __construct($command, $keyfile, $debug = FALSE) {
-    parent::__construct($command, $keyfile);
-    $this->debug = $debug;
+  public function __construct(array $params) {
+    parent::__construct($params);
     // This is test data
     $contact = $this->createContact(array('phone' => '99123123123', 'peer' => 'Jose_Reyero', 'name' => 'Jose Reyero'));
     $this->inbox[] = new TelegramMessage(array('from' => $contact, 'text' => 'Hello, nice day!'));
