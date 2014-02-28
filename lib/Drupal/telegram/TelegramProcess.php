@@ -12,6 +12,7 @@ use \streamWrapper;
 class TelegramProcess {
 
   // Running parameters.
+  protected $params;
   protected $commandLine;
 
   // Running process
@@ -33,9 +34,17 @@ class TelegramProcess {
   /**
    * Class constructor.
    */
-  public function __construct($command = '/usr/local/bin/telegram', $keyfile = '/etc/telegram/server.pub', $debug = FALSE) {
-    $this->commandLine = $command . ' -k ' . $keyfile;
-    $this->debug = $debug;
+  public function __construct(array $params) {
+    // Add some defaults
+    $params += array(
+      'command' => '/usr/local/bin/telegram',
+      'keyfile' => '/etc/telegram/server.pub',
+      'debug' => 0,
+      'homepath' => '/tmp');
+    // Initialize variables.
+    $this->params = $params;
+    $this->commandLine = $params['command'] . ' -k ' . $params['keyfile'];
+    $this->debug = $params['debug'];
   }
 
   /**
@@ -203,7 +212,7 @@ class TelegramProcess {
          2 => array("pipe", "w+"),  // stderr
          //2 => array("file", '/tmp/telegram-error.txt', "a") // stderr is a file to write to
       );
-      $this->process = proc_open($this->commandLine, $descriptorspec, $this->pipes, $cwd);
+      $this->process = proc_open($this->commandLine, $descriptorspec, $this->pipes, $this->params['homepath']);
 
       if ($this->process) {
         // Use non blocking streams.
