@@ -79,7 +79,7 @@ class TelegramClient {
 		  {
     //}
     //return $this->contacts;
-    	    return $this->parseResponse('/^User\s\#(\w+)\:\s(\w+)\s\((\w+)\s(\w+)\)\s(\w+)\.\s(\w+\s\w+)\s\[(\w+\/\w+\/\w+)\s(\w+\:\w+\:\w+)\]/');
+    	  return $this->parseResponse('/User\s\#(\d+)\:\s([\w\s]+)\s\((\w+)\s(\d+)\)\s(\w+)\.\s(\w+\s\w+)\s\[(\w+\/\w+\/\w+)\s(\w+\:\w+\:\w+)\]/u');
 		  }
   }
 

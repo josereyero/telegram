@@ -111,13 +111,16 @@ class TelegramProcess {
    *   Matching lines as resulting arrays from preg_match.
    */
   function parseResponse($pattern) {
+  	$this->debug('parseResponse');
     if (!isset($this->output)) {
       $this->getResponse();
     }
 
     if (!empty($this->output)) {
       $result = array();
+      
       foreach ($this->output as $index => $line) {
+      	$this->debug($index);
         $matches = array();
         if (preg_match($pattern, $line, $matches)) {
           // Yeah, line matches expected format.
@@ -125,6 +128,7 @@ class TelegramProcess {
           $result[] = array(
             'matches' => $matches,
           );
+          $this->debug($result);
           // Remove it from buffer.
           unset($this->output[$index]);
         }
@@ -219,7 +223,7 @@ class TelegramProcess {
     //$string = iconv("UTF-8", "UTF-8//IGNORE", $string);
     //sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g"
     //$string = preg_replace('/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?/u', '', $string);
-    $string = preg_replace('/\x1B\[[0-9;]*[mK]/u', '', $string);
+   	$string = preg_replace('/\x1B\[[0-9;]*[mK]/u', '', $string);
     return trim($string);
   }
 
