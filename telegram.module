@@ -11,6 +11,8 @@
  * http://jmanuelguerrero.com
  */
 
+use Drupal\telegram\DrupalTelegramClient;
+
 /**
  * Implements hook_menu().
  */
@@ -20,6 +22,7 @@
      'page callback' => 'drupal_get_form',
      'page arguments' => array('telegram_test_form'),
      'access arguments' => array('administer site configuration'),
+     'file' => 'telegram.admin.inc',
    );
    $items['admin/config/telegram'] = array(
      'title' => t('Telegram Settings'),
@@ -30,26 +33,33 @@
    return $items;
 }
 
-
 /**
- * Test form.
+ * Send message to phone number.
  */
-function telegram_test_form($form, &$form_state) {
-  $form['number'] = array(
-    '#title' => t('To'),
-    '#type' => 'textfield',
-    '#size' => 20,
-  );
-  $form['text'] = array(
-    '#title' => 'text',
-    '#type' => 'textarea',
-  );
-  return $form;
+function telegram_send_phone($phone, $text) {
+  return telegram_client()->sendToPhone($phone, $text);
 }
 
 /**
- * Test form submit.
+ * Send message to user.
  */
-function telegram_test_form_submit($form, &$form_state) {
-  drupal_set_message(t('Good try'));
+function telegram_send_user($account, $text) {
+
+}
+
+/**
+ * Get Telegram client
+ */
+function telegram_client() {
+  static $client;
+
+  if (!isset($slient)) {
+    $client = new DrupalTelegramClient(
+        variable_get_value('telegram_command_exec'),
+        variable_get_value('telegram_command_key'),
+        variable_get_value('telegram_command_debut')
+    );
+  }
+
+  return $client;
 }

@@ -16,12 +16,9 @@ class TelegramClient {
   const RX_DATE = '\[[\w\s\:]\]'; // [20 Feb], [15:19]
   const RX_PENDING = '\d+\sunread'; // 0 unread
 
-  /**
-   * Running parameters to pass to the process.
-   *
-   * @var array
-   */
-  protected $params;
+  // Running parameters.
+  protected $command;
+  protected $keyfile;
 
   // Running process
   protected $process;
@@ -35,11 +32,9 @@ class TelegramClient {
   /**
    * Class constructor.
    */
-  public function __construct(array $params) {
-    // Add some defaults
-    $params += array('debug' => 0);
-    $this->params = $params;
-    $this->debug = $params['debug'];
+  public function __construct($command = '/usr/local/bin/telegram', $keyfile = '/etc/telegram/server.pub') {
+    $this->command = $command;
+    $this->keyfile = $keyfile;
   }
 
 
@@ -85,9 +80,8 @@ class TelegramClient {
    * Get list of current dialogs.
    */
   function getDialogList() {
-    if ($this->execCommand('dialog_list')) {
-      // @todo Add the right regexp format for the response.
-      return $this->parseResponse();
+    if ($process->execCommand('dialog_list')) {
+      $process->parseResponse();
     }
   }
 
@@ -102,31 +96,10 @@ class TelegramClient {
    *   Optional regex to parse the response.
    *   None if we don't need a response.
    */
-  protected function execCommand($command, $args = NULL) {
+  function execCommand($command, $args = NULL) {
     // Make sure process is started.
     if ($process = $this->getProcess()) {
       return $process->execCommand($command, $args);
-    }
-  }#preg_match('^User\s\#(\d+)\:\s([\w\s]+)\s\([\w\s]+\)\s(online|offline)\.\s.*', $mensage[$i], $coincidencias);
-  
-
-  /**
-   * Parse process response.
-   *
-   * @param $pattern
-   *   Regexp with the response format.
-   *
-   * @return array|NULL
-   *   Response array if any.
-   */
-  protected function parseResponse($pattern = NULL) {
-     if ($process = $this->getProcess()) {
-       if (preg_match('/^User\s\#(\d+)\:\s([\w\s]+)\s.*/', $mensage[$i]))
-     	  {
-     	    ParseContactList($process);	
-     	  }
-     	
-      return $process->parseResponse($pattern);
     }
   }
 
@@ -144,7 +117,7 @@ class TelegramClient {
    * Start process.
    */
   function start() {
-    $this->process = new TelegramProcess($this->params);
+    $this->process = new TelegramProcess($this->command, $this->keyfile, $this->debug);
     $this->process->start();
     sleep(1);
   }
@@ -167,32 +140,6 @@ class TelegramClient {
     if ($this->debug) {
       print $message . "\n";
     }
-  }
-
-  /**
-   *
-   * Parser for contact_list lines
-   * return @array
-   */
-  function ParseContactList($cadena)
-    {
-	  $replace = array('(', ')', '[', ']', ':', '"', '#','.');
-	  $idinit = strpos($cadena, '#')+1;
-	  $idend = strpos($cadena, ':');
-	  $cnameend = strpos($cadena, '(');
-	  $cnameoend = strpos($cadena, ')');
-	  $cnameocon = str_replace($replace, '', substr($cadena, $cnameend, $cnameoend));
-	  $statusinit = strpos($cadena, ')');
-	  $statusend = strpos($cadena, '.');
-	  $lastcondinit = strpos($cadena, '[');
-	  $lastconhend = strpos($cadena, ']');
-	  $linea['usid'] = substr($cadena, $idinit, $idend-$idinit);
-	  $linea['cname'] =  substr($cadena, $idend+2, $cnameend-$idend-2);
-	  sscanf ($cnameocon, '%s %s', $linea['cnameo'], $linea['number'] );
-	  $linea['lastcond'] = substr($cadena, $lastcondinit+1, 10);
-	  $linea['lastconh'] = substr($cadena, $lastcondinit+11, 9);
-	  $this->contacts[] = $linea;
-	  return $this->$linea;
   }
 
 }
