@@ -42,7 +42,6 @@ class TelegramClient {
     $this->debug = $params['debug'];
   }
 
-
   /**
    * Send message to phone number.
    */
@@ -73,10 +72,10 @@ class TelegramClient {
       $output = $this->execCommand('contact_list');
       // Multiple lines of the form:
       // User #12345678: User Name (User_Name 341233444)....
-      foreach (explode("\n", $output) as $line) {
-        $line = trim($line);
-        $this->contacts[] = $line;
-      }
+      $response = $this->parseResponse('/^User\s\#(\d+)\:\s([\w\s]+)\s.*/');
+      // Response should be an array....?
+      // @todo Put that array in contacts with the right format
+
     }
     return $this->contacts;
   }
@@ -107,8 +106,7 @@ class TelegramClient {
     if ($process = $this->getProcess()) {
       return $process->execCommand($command, $args);
     }
-  }#preg_match('^User\s\#(\d+)\:\s([\w\s]+)\s\([\w\s]+\)\s(online|offline)\.\s.*', $mensage[$i], $coincidencias);
-  
+  }
 
   /**
    * Parse process response.
@@ -120,12 +118,7 @@ class TelegramClient {
    *   Response array if any.
    */
   protected function parseResponse($pattern = NULL) {
-     if ($process = $this->getProcess()) {
-       if (preg_match('/^User\s\#(\d+)\:\s([\w\s]+)\s.*/', $mensage[$i]))
-     	  {
-     	    ParseContactList($process);	
-     	  }
-     	
+    if ($process = $this->getProcess()) {
       return $process->parseResponse($pattern);
     }
   }
