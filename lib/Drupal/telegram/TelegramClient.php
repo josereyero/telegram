@@ -102,7 +102,8 @@ class TelegramClient {
     if ($process = $this->getProcess()) {
       return $process->execCommand($command, $args);
     }
-  }
+  }#preg_match('^User\s\#(\d+)\:\s([\w\s]+)\s\([\w\s]+\)\s(online|offline)\.\s.*', $mensage[$i], $coincidencias);
+  
 
   /**
    * Parse process response.
@@ -115,6 +116,10 @@ class TelegramClient {
    */
   protected function parseResponse($pattern = NULL) {
      if ($process = $this->getProcess()) {
+     	if (if (preg_match('/^User\s\#(\d+)\:\s([\w\s]+)\s.*/', $mensage[$i])))
+     	{
+     		ParseContactList($process);	
+     	}
       return $process->parseResponse($pattern);
     }
   }
