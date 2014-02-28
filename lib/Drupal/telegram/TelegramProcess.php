@@ -103,12 +103,45 @@ class TelegramProcess {
 
   /**
    * Parse response and return.
+   *
+   * @param string $pattern
+   *   Regular expression to match results.
+   *
+   * @return array
+   *   Matching lines as resulting arrays from preg_match.
    */
-  function parseResponse() {
+  function parseResponse($pattern) {
     if (!isset($this->output)) {
       $this->getResponse();
     }
-    return $this->output;
+
+    if (!empty($this->output)) {
+      $result = array();
+      foreach ($this->output as $index => $line) {
+        $matches = array();
+        if (preg_match($pattern, $line, $matches)) {
+          // Yeah, line matches expected format.
+          // First add it to result.
+          $result[] = array(
+            'line' => $line,
+            'matches' => $matches,
+          );
+          // Remove it from buffer.
+          unset($this->output[$index]);
+        }
+        else {
+          // Line doesn't match, keep it.
+          // so do nothing.
+        }
+      }
+      // Returns resulting array from all matching lines
+      return $result;
+    }
+    else {
+      // No output, return empty array.
+      return array();
+    }
+
   }
 
   /**
