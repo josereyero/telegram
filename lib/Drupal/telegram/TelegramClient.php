@@ -55,7 +55,7 @@ class TelegramClient {
    * Send message to peer.
    */
   public function sendMessage($peer, $message) {
-    $output = $this->execCommand('msg ' . $peer . ' ' . $message);
+    $output = $this->execCommand('msg', $peer . ' ' . $message);
     // @todo Parse output and get success / failure.
     return TRUE;
   }
@@ -94,14 +94,14 @@ class TelegramClient {
   }
 
   /**
-   * Add contact  
+   * Add contact
    */
   function AddContact($phone, $fname, $sname) {
   	$output = $this->execCommand('add_contact ' . $phone . ' ' .  $fname . ' ' . $sname);
-  	 // @TODO test the exit of the command	
+  	 // @TODO test the exit of the command
   	return TRUE;
   }
-  
+
   /**
    * Low level exec function.
    *

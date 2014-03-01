@@ -17,15 +17,8 @@ use Drupal\telegram\DrupalTelegramClient;
  * Implements hook_menu().
  */
 function telegram_menu() {
-   $items['admin/config/telegram/test'] = array(
-     'title' => t('Test'),
-     'page callback' => 'drupal_get_form',
-     'page arguments' => array('telegram_test_form'),
-     'access arguments' => array('administer site configuration'),
-     'file' => 'telegram.admin.inc',
-   );
    $items['admin/config/telegram'] = array(
-     'title' => t('Telegram'),
+     'title' => 'Telegram',
      'access arguments' => array('administer site configuration'),
      'position' => 'right',
      'page callback' => 'system_admin_menu_block_page',
@@ -34,10 +27,35 @@ function telegram_menu() {
      'file path' => drupal_get_path('module', 'system'),
    );
    $items['admin/config/telegram/settings'] = array(
-     'title' => t('Telegram Settings'),
+     'title' => 'Settings',
+     'description' => 'Configure Telegram',
      'page callback' => 'drupal_get_form',
      'page arguments' => array('variable_module_form', 'telegram'),
      'access arguments' => array('administer site configuration'),
+   );
+   $items['admin/config/telegram/test'] = array(
+     'title' => 'Test',
+     'description' => 'Test configuration settings',
+     'page callback' => 'drupal_get_form',
+     'page arguments' => array('telegram_test_form'),
+     'access arguments' => array('administer site configuration'),
+     'file' => 'telegram.admin.inc',
+   );
+   $items['admin/config/telegram/send'] = array(
+     'title' => 'Send',
+     'description' => 'Try sending messages manually',
+     'page callback' => 'drupal_get_form',
+     'page arguments' => array('telegram_send_form'),
+     'access arguments' => array('administer site configuration'),
+     'file' => 'telegram.admin.inc',
+   );
+   $items['admin/config/telegram/contacts'] = array(
+     'title' => 'Contacts',
+     'description' => 'Manage contact list',
+     'page callback' => 'drupal_get_form',
+     'page arguments' => array('telegram_contact_list_form'),
+     'access arguments' => array('administer site configuration'),
+     'file' => 'telegram.admin.inc',
    );
    return $items;
 }
@@ -67,6 +85,7 @@ function telegram_client() {
       'command' => variable_get_value('telegram_command_exec'),
       'keyfile' => variable_get_value('telegram_command_key'),
       'homepath' => variable_get_value('telegram_command_cwd'),
+      'configfile' => variable_get_value('telegram_config_path'),
       'debug' => variable_get_value('telegram_command_debug')
     ));
   }

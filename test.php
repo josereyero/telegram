@@ -2,15 +2,25 @@
 <?php
 /**
  * Telegram test.
+ *
+ * This is a demo/test script to be run from the command line.
+ *
+ * The TelegramClient can be used without Drupal too.
  */
+
+/* Start: Remove */
+print "Telegram Client demo.\n";
+print "Edit and remove these lines to run from the command line.\n";
+print "DON'T DO IT ON A PUBLIC WEB SERVER FOLDER\n";
+exit(0);
+/* End: Remove */
 
 /**
  * Define some system dependent variables.
  */
 define('TELEGRAM_COMMAND', '/usr/local/bin/telegram');
 define('TELEGRAM_KEYFILE', '/etc/telegram/server.pub');
-// This one should contain an initialized .telegram folder
-// That you can get by running telegram from the console.
+define('TELEGRAM_CONFIG', '/etc/telegram/telegram.conf');
 define('TELEGRAM_HOMEPATH', '/home/telegram');
 
 require_once 'lib/Drupal/telegram/TelegramProcess.php';
@@ -22,6 +32,7 @@ use Drupal\telegram\TelegramClient;
 $client = new TelegramClient(array(
     'command' => TELEGRAM_COMMAND,
     'keyfile' => TELEGRAM_KEYFILE,
+    'configfile' => TELEGRAM_CONFIG,
     'homepath' => TELEGRAM_HOMEPATH,
 ));
 $client->start();
@@ -32,9 +43,12 @@ $client->start();
 
 
 $list = $client->getDialogList();
-print "Dialog list:\n\n";
+print "\nDialog list:\n";
 var_dump($list);
 
+$list = $client->getContactList();
+print "\n\nContact list:\n\n";
+var_dump($list);
 
 // Close client.
 $result = $client->stop();

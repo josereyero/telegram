@@ -1,5 +1,0 @@
-telegram
-========
-
-Experimental experiment
-
