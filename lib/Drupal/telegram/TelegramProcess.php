@@ -44,7 +44,10 @@ class TelegramProcess {
       'homepath' => '/tmp');
     // Initialize variables.
     $this->params = $params;
-    $this->commandLine = $params['command'] . ' -c ' . $params['configfile'] . ' -k ' . $params['keyfile'];
+    $this->commandLine = $params['command'] .
+      ' -N' . // Print out message numbers
+      ' -c ' . $params['configfile'] .
+      ' -k ' . $params['keyfile'];
     $this->debug = $params['debug'];
   }
 
