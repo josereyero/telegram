@@ -61,6 +61,7 @@ function telegram_test_form_submit($form, &$form_state) {
   }
   // Complete with other data.
   $output['errors'] = $client->getProcess()->getErrors();
+  $output['logs'] = $client->getProcess()->getLogs();
 
   foreach ($output as $title => $value) {
     $markup = is_string($value) ? check_plain($value) : check_plain(print_r($value, TRUE));
@@ -70,7 +71,6 @@ function telegram_test_form_submit($form, &$form_state) {
       '#markup' => '<pre>' . $markup . '</pre>',
     );
   }
-
 
   $form_state['rebuild'] = TRUE;
   $client->stop();

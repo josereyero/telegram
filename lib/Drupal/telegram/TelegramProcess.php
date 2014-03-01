@@ -288,18 +288,42 @@ class TelegramProcess {
   }
 
   /**
-   * Log line in output.
+   * Log debug message if in debug mode.
    */
-  function debug($message) {
+  function debug($message, $type = 'DEBUG') {
     //$this->output[] = $message;
     if ($this->debug) {
-      print 'DEBUG: ' . $message . "\n";
+      $this->log($message, $type);
     }
   }
 
+  /**
+   * Log message / mixed data.
+   *
+   * @param mixed $message
+   */
+  function log($message, $type = 'LOG') {
+    $txt = $type . ': ';
+    $txt .= is_string($message) ? $message : print_r($message, TRUE);
+    $this->logs[] = $txt;
+  }
+
+  /**
+   * Wait for a number of miliseconds.
+   *
+   * @param int $miliseconds
+   */
+
   function wait($miliseconds = 10) {
-    usleep(1000 * $miliseconds);
     $this->debug("Sleep $miliseconds ms");
+    usleep(1000 * $miliseconds);
+  }
+
+  /**
+   * Get logged messages.
+   */
+  function getLogs() {
+    return isset($this->logs) ? $this->logs : array();
   }
 
   /**
@@ -309,7 +333,7 @@ class TelegramProcess {
     if (isset($this->pipes) && is_resource($this->pipes[2])) {
       $this->debug("getErrors");
       while ($error = fgets($this->pipes[2])) {
-        $this->debug("ERROR: $error");
+        $this->log($error, 'ERROR');
         $this->errors[] = $error;
       }
     }
