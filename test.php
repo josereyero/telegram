@@ -2,7 +2,18 @@
 <?php
 /**
  * Telegram test.
+ *
+ * This is a demo/test script to be run from the command line.
+ *
+ * The TelegramClient can be used without Drupal too.
  */
+
+/* Start: Remove */
+print "Telegram Client demo.\n";
+print "Edit and remove these lines to run from the command line.\n";
+print "DON'T DO IT ON A PUBLIC WEB SERVER FOLDER\n";
+exit(0);
+/* End: Remove */
 
 /**
  * Define some system dependent variables.
@@ -10,8 +21,6 @@
 define('TELEGRAM_COMMAND', '/usr/local/bin/telegram');
 define('TELEGRAM_KEYFILE', '/etc/telegram/server.pub');
 define('TELEGRAM_CONFIG', '/etc/telegram/telegram.conf');
-// This one should contain an initialized .telegram folder
-// That you can get by running telegram from the console.
 define('TELEGRAM_HOMEPATH', '/home/telegram');
 
 require_once 'lib/Drupal/telegram/TelegramProcess.php';
