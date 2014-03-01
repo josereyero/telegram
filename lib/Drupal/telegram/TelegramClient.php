@@ -89,12 +89,22 @@ class TelegramClient {
 
   /**
    * Add contact
+   * Add contact can change a name contact
    */
   function AddContact($phone, $fname, $sname) {
   	$output = $this->execCommand('add_contact ' . $phone . ' ' .  $fname . ' ' . $sname);
   	 // @TODO test the exit of the command
   	return TRUE;
   }
+
+  /**
+   * Rename contact
+   */
+  function RenameContact($peer, $fname, $sname){
+  	$output = $this->execCommand('rename_contact ' . $peer . ' ' . $fname . ' '. $sname);
+  	return TRUE;
+  }
+  
 
   /**
    * Low level exec function.
