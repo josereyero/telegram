@@ -39,11 +39,12 @@ class TelegramProcess {
     $params += array(
       'command' => '/usr/local/bin/telegram',
       'keyfile' => '/etc/telegram/server.pub',
+      'configfile' => '/etc/telegram/telegram.conf',
       'debug' => 0,
       'homepath' => '/tmp');
     // Initialize variables.
     $this->params = $params;
-    $this->commandLine = $params['command'] . ' -k ' . $params['keyfile'];
+    $this->commandLine = $params['command'] . ' -c ' . $params['configfile'] . ' -k ' . $params['keyfile'];
     $this->debug = $params['debug'];
   }
 
@@ -75,7 +76,7 @@ class TelegramProcess {
     if ($params) {
       // @todo Better sanitize params.
       $params = $this->filter($params);
-      $params = str_replace("\n", ' ');
+      $params = str_replace("\n", ' ', $params);
       $command .= ' ' . $params;
     }
     // Read first line that should be the command.

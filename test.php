@@ -9,6 +9,7 @@
  */
 define('TELEGRAM_COMMAND', '/usr/local/bin/telegram');
 define('TELEGRAM_KEYFILE', '/etc/telegram/server.pub');
+define('TELEGRAM_CONFIG', '/etc/telegram/telegram.conf');
 // This one should contain an initialized .telegram folder
 // That you can get by running telegram from the console.
 define('TELEGRAM_HOMEPATH', '/home/telegram');
@@ -22,6 +23,7 @@ use Drupal\telegram\TelegramClient;
 $client = new TelegramClient(array(
     'command' => TELEGRAM_COMMAND,
     'keyfile' => TELEGRAM_KEYFILE,
+    'configfile' => TELEGRAM_CONFIG,
     'homepath' => TELEGRAM_HOMEPATH,
 ));
 $client->start();
@@ -32,9 +34,12 @@ $client->start();
 
 
 $list = $client->getDialogList();
-print "Dialog list:\n\n";
+print "\nDialog list:\n";
 var_dump($list);
 
+$list = $client->getContactList();
+print "\n\nContact list:\n\n";
+var_dump($list);
 
 // Close client.
 $result = $client->stop();

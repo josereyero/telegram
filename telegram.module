@@ -34,7 +34,7 @@ function telegram_menu() {
      'file path' => drupal_get_path('module', 'system'),
    );
    $items['admin/config/telegram/settings'] = array(
-     'title' => t('Telegram Settings'),
+     'title' => t('Settings'),
      'page callback' => 'drupal_get_form',
      'page arguments' => array('variable_module_form', 'telegram'),
      'access arguments' => array('administer site configuration'),
@@ -67,6 +67,7 @@ function telegram_client() {
       'command' => variable_get_value('telegram_command_exec'),
       'keyfile' => variable_get_value('telegram_command_key'),
       'homepath' => variable_get_value('telegram_command_cwd'),
+      'configfile' => variable_get_value('telegram_config_path'),
       'debug' => variable_get_value('telegram_command_debug')
     ));
   }

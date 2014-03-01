@@ -22,6 +22,11 @@ function telegram_variable_info($options) {
     'title' => t('Key file path', array(), $options),
     'default' => '/etc/telegram/server.pub',
   );
+  $variables['telegram_config_path'] = array(
+    'type' => 'string',
+    'title' => t('Configuration file path', array(), $options),
+    'default' => '/etc/telegram/telegram.conf',
+  );
   $variables['telegram_command_cwd'] = array(
     'type' => 'string',
     'title' => t('Command cwd path', array(), $options),

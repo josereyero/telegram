@@ -56,13 +56,6 @@ class DrupalTelegramClient extends TelegramClient {
   }
 
   /**
-   * Send message to contact.
-   */
-  public function sendMessage($contact, $message) {
-    return $this->sendToPeer($message->to->getPeer(), $message->getText());
-  }
-
-  /**
    * Create contact. Data must contain at least phone number.
    */
   protected function createContact(array $data) {
@@ -110,7 +103,7 @@ class DrupalTelegramClient extends TelegramClient {
    * @return array|FALSE
    */
   public function sendToPeer($peer, $message) {
-    return TRUE;
+    return $this->sendMessage($peer, $message);
   }
 
   /**
