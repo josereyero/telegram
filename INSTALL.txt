@@ -1,0 +1,60 @@
+/**
+ * @file
+ * INSTALL file Telegram module.
+ */
+ 
+These are the building and installation instrucions for Linux. If you use some other system
+consider first upgrading to Linux ;-)
+
+(Feedback for other systems will be welcomed and added here)
+
+0. All paths here are just an example but they can be configured visting the module settings
+   at Configuration > Telegram > Settings
+ 
+1. Download and Compile Telegram messenger CLI
+   Download from https://github.com/vysheng/tg
+   Follow instructions on that page.
+ 
+2. Move executable and key file to a location where the web server can access and run it.
+   Default locations are:
+   /usr/local/bin/telegram
+   /etc/telegram/server.pub.
+   
+3. Create configuration for your phone number. When first run from the console it will ask
+   you for the phone number, confirmation message, etc...
+   These configuration files are stored in a .telegram folder in your home folder
+   In my case: /home/jose/.telegram
+ 
+4. Create configuration file and place it in /etc/telegram/telegram.conf
+   Thet contents of the file are something like:
+
+   # Telegram config file
+   log_level = 0;
+   msg_num = 1;
+   config_directory = "/home/telegram";
+   
+5. Copy all the files from the user's configuration folder (/home/jose/.telegram) to the
+   configuration directory the web server will use.
+   Make sure all the files are readable and writable by the web server user (www-data).
+   
+   It looks like this in my box:
+    
+   jose@localbox:/home/telegram$ ls -l
+   
+   -rw-rwx--- 1 jose www-data 1545 Mar  1 12:12 auth
+   -rw-rwx--- 1 jose www-data   65 Feb 28 15:41 config
+   drwxrwx--- 2 jose www-data 4096 Feb 28 15:41 downloads
+   -rw-rwx--- 1 jose www-data    0 Feb 28 15:45 secret
+   -rw-rwx--- 1 jose www-data   24 Mar  1 12:02 state
+ 
+ 6. Enable the module and set the paths the web server will use. 
+    Visit: Configuration > Telegram > Settings
+    
+    Example:
+    - Executable command: /usr/local/bin/telegram
+    - Key file path: /etc/telegram/server.pub
+    - Configuration file path: /etc/telegram/telegram.conf
+    - Command cwd path: /home/telegram
+   
+ 7. In Drupal, Go to Configuration > Telegram
+ 
