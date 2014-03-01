@@ -69,7 +69,11 @@ class TelegramClient {
   function getContactList() {
     if (!isset($this->contacts)) {
 		  if ($this->execCommand('contact_list')) {
-    	  $response = $this->parseResponse('/User\s\#(\d+)\:\s([\w\s]+)\s\((\w+)\s(\d+)\)\s(\w+)\.\s(\w+\s\w+)\s\[(\w+\/\w+\/\w+)\s(\w+\:\w+\:\w+)\]/u');
+		  $patern = array(
+		  0=>'/User\s\#(\d+)\:\s([\w\s]+)\s\((\w+)\s(\d+)\)\s(\offline)\.\s(\w+\s\w+)\s\[(\w+\/\w+\/\w+)\s(\w+\:\w+\:\w+)\]/u',
+		  1=>'/User\s\#(\d+)\:\s([\w\s]+)\s\((\w+)\s(\d+)\)\s(\online)/',
+		  );
+    	  $response = $this->parseResponse($patern);
     	  // @todo Parse response into a named array
     	  $this->contacts = $response;
 		  }

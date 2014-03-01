@@ -110,11 +110,13 @@ class TelegramProcess {
    *
    * @param string $pattern
    *   Regular expression to match results.
+   *   @param array $key
+   *   Array with the key of name array
    *
    * @return array
    *   Matching lines as resulting arrays from preg_match.
    */
-  function parseResponse($pattern) {
+  function parseResponse($pattern, $key) {
   	$this->debug('parseResponse');
     if (!isset($this->output)) {
       $this->getResponse();
@@ -122,23 +124,25 @@ class TelegramProcess {
 
     if (!empty($this->output)) {
       $result = array();
-
+	   
       foreach ($this->output as $index => $line) {
       	$this->debug($index);
         $matches = array();
-        if (preg_match($pattern, $line, $matches)) {
-          // Yeah, line matches expected format.
-          // First add it to result.
-          $result[] = array(
-            'matches' => $matches,
-          );
-          $this->debug($result);
-          // Remove it from buffer.
-          unset($this->output[$index]);
-        }
-        else {
-          // Line doesn't match, keep it.
-          // so do nothing.
+        foreach ($pattern as $patern) {
+          if (preg_match($patern, $line, $matches)) {
+            // Yeah, line matches expected format.
+            // First add it to result.
+            $result[] = array(
+              'matches' => $matches,
+            );
+            $this->debug($result);
+            // Remove it from buffer.
+            unset($this->output[$index]);
+          }
+          else {
+            // Line doesn't match, keep it.
+            // so do nothing.
+          }
         }
       }
       // Returns resulting array from all matching lines
