@@ -22,6 +22,8 @@ define('TELEGRAM_COMMAND', '/usr/local/bin/telegram');
 define('TELEGRAM_KEYFILE', '/etc/telegram/server.pub');
 define('TELEGRAM_CONFIG', '/etc/telegram/telegram.conf');
 define('TELEGRAM_HOMEPATH', '/home/telegram');
+// Enable debug mode.
+define('TELEGRAM_DEBUG', 1);
 
 require_once 'lib/Drupal/telegram/TelegramProcess.php';
 require_once 'lib/Drupal/telegram/TelegramClient.php';
@@ -34,13 +36,9 @@ $client = new TelegramClient(array(
     'keyfile' => TELEGRAM_KEYFILE,
     'configfile' => TELEGRAM_CONFIG,
     'homepath' => TELEGRAM_HOMEPATH,
+    'debug' => TELEGRAM_DEBUG,
 ));
 $client->start();
-
-//print "Contact list:\n\n";
-//$contacts = $client->getContactList();
-//var_dump($contacts);
-
 
 $list = $client->getDialogList();
 print "\nDialog list:\n";
@@ -49,6 +47,9 @@ var_dump($list);
 $list = $client->getContactList();
 print "\n\nContact list:\n\n";
 var_dump($list);
+
+print "\n\nDebug output:\n\n";
+var_dump($client->getProcess()->getLogs());
 
 // Close client.
 $result = $client->stop();
