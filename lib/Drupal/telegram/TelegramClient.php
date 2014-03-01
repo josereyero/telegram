@@ -67,20 +67,14 @@ class TelegramClient {
    *   Contacts indexed by phone number.
    */
   function getContactList() {
-    //if (!isset($this->contacts)) {
-     // $this->contacts = array();
-      //$output = $this->execCommand('contact_list');
-      // Multiple lines of the form:
-      // User #12345678: User Name (User_Name 341233444)....
-      ///$response = $this->parseResponse('/^User\s\#(\d+)\:\s([\w\s]+)\s.*/');
-      // Response should be an array....?
-      // @todo Put that array in contacts with the right format
-		if ($this->execCommand('contact_list'))
-		  {
-    //}
-    //return $this->contacts;
-    	  return $this->parseResponse('/User\s\#(\d+)\:\s([\w\s]+)\s\((\w+)\s(\d+)\)\s(\w+)\.\s(\w+\s\w+)\s\[(\w+\/\w+\/\w+)\s(\w+\:\w+\:\w+)\]/u');
+    if (!isset($this->contacts)) {
+		  if ($this->execCommand('contact_list')) {
+    	  $response = $this->parseResponse('/User\s\#(\d+)\:\s([\w\s]+)\s\((\w+)\s(\d+)\)\s(\w+)\.\s(\w+\s\w+)\s\[(\w+\/\w+\/\w+)\s(\w+\:\w+\:\w+)\]/u');
+    	  // @todo Parse response into a named array
+    	  $this->contacts = $response;
 		  }
+    }
+		return $this->contacts;
   }
 
   /**

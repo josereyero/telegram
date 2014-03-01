@@ -122,7 +122,7 @@ class TelegramProcess {
 
     if (!empty($this->output)) {
       $result = array();
-      
+
       foreach ($this->output as $index => $line) {
       	$this->debug($index);
         $matches = array();
@@ -219,14 +219,6 @@ class TelegramProcess {
    */
   function filter($string) {
     // Filter control codes in output
-    //$string = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x80-\x9F]/u', '', $string);
-    //$string = preg_replace("/#[a-f0-9]{6}/i", '', $string);
-    //$string = preg_replace( '/[^[:print:]]/', '',$string);
-    //$string = preg_replace('/[[:cntrl:]]+/', '', $string);
-    //$string = preg_replace('/(?!\n)[\p{Cc}]/', '', $string);
-    //$string = iconv("UTF-8", "UTF-8//IGNORE", $string);
-    //sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g"
-    //$string = preg_replace('/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?/u', '', $string);
    	$string = preg_replace('/\x1B\[[0-9;]*[mK]/u', '', $string);
     return trim($string);
   }
