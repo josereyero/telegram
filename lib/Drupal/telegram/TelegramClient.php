@@ -142,6 +142,13 @@ class TelegramClient {
   	}
   }
   
+  /**
+   * Mark as read messages of a peer 
+   */
+  function MarkAsRead($peer){
+  	$output = $this->execCommand('mark_read ' . $peer );
+  	return TRUE; 	
+  }	
   
   /**
    * Low level exec function.
