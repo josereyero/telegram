@@ -69,13 +69,23 @@ class TelegramClient {
   function getContactList() {
     if (!isset($this->contacts)) {
 		  if ($this->execCommand('contact_list')) {
-		  $patern = array(
-		  0=>'/User\s\#(\d+)\:\s([\w\s]+)\s\((\w+)\s(\d+)\)\s(\offline)\.\s(\w+\s\w+)\s\[(\w+\/\w+\/\w+)\s(\w+\:\w+\:\w+)\]/u',
-		  1=>'/User\s\#(\d+)\:\s([\w\s]+)\s\((\w+)\s(\d+)\)\s(\online)/',
-		  );
-    	  $response = $this->parseResponse($patern);
-    	  // @todo Parse response into a named array
-    	  $this->contacts = $response;
+		    $patern = array(
+		    0=>'/User\s\#(\d+)\:\s([\w\s]+)\s\((\w+)\s(\d+)\)\s(\offline)\.\s\w+\s\w+\s\[(\w+\/\w+\/\w+)\s(\w+\:\w+\:\w+)\]/u',
+		    1=>'/User\s\#(\d+)\:\s([\w\s]+)\s\((\w+)\s(\d+)\)\s(\online)/',
+		     );
+		  
+		    $key = array(
+		    0 => 'string',
+		    1 => 'id',
+		    2 => 'namea',
+		    3 => 'nameb',
+		    4 => 'number',
+		    5 => 'status',
+		    6 => 'date',
+		    7 => 'hour',);
+    	    $response = $this->parseResponse($patern, $key);
+    	    // @todo Parse response into a named array
+    	    $this->contacts = $response;
 		  }
     }
 		return $this->contacts;
@@ -87,7 +97,12 @@ class TelegramClient {
   function getDialogList() {
     if ($this->execCommand('dialog_list')) {
       // @todo Add the right regexp format for the response.
-      return $this->parseResponse('/^User\s([\w\s]+)\:\s(\d+)\s(\w+)$/u');
+      
+      $patern = array(
+      0=> '/^User\s([\w\s]+)\:\s(\d+)\s(\w+)$/u',
+      );
+      $key = array();
+      return $this->parseResponse($patern, $key);
     }
   }
 
@@ -137,9 +152,14 @@ class TelegramClient {
    * @return array|NULL
    *   Response array if any.
    */
-  protected function parseResponse($pattern = NULL) {
+  protected function parseResponse($pattern = NULL, $key) {
     if ($process = $this->getProcess()) {
-      return $process->parseResponse($pattern);
+    	if (!empty($key)){
+          return $process->parseResponse($pattern, $key);
+    	}
+    	else {
+    	  return $process->parseResponse($pattern);	
+    	}
     }
   }
 

@@ -116,7 +116,7 @@ class TelegramProcess {
    * @return array
    *   Matching lines as resulting arrays from preg_match.
    */
-  function parseResponse($pattern, $key) {
+  function parseResponse($pattern, $key = NULL) {
   	$this->debug('parseResponse');
     if (!isset($this->output)) {
       $this->getResponse();
@@ -132,7 +132,7 @@ class TelegramProcess {
           if (preg_match($patern, $line, $matches)) {
             // Yeah, line matches expected format.
             // First add it to result.
-            $result[] = array(
+            $resultmed[] = array(
               'matches' => $matches,
             );
             $this->debug($result);
@@ -145,6 +145,19 @@ class TelegramProcess {
           }
         }
       }
+      	  $countresult = count($resultmed);	
+		  (isset($key)) ? $countkey = count($key):'';
+		  for ($i=0 ; $i<$countresult ; $i++){
+		  	(!isset($key)) ? $countkey = count($resultmed[$i]['matches']):'';
+		    $z=0;
+      		foreach ($resultmed[$i]['matches'] as $lines) {  
+      		  if ($z == $countkey){
+      		    $z=0;
+      		  }
+      		  (isset($key)) ? $result[$i][$key[$z]] = $lines : $result[$i][$z] = $lines;	
+      		  $z++;
+      	    }
+      	  }
       // Returns resulting array from all matching lines
       return $result;
     }
