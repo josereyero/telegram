@@ -124,7 +124,25 @@ class TelegramClient {
   	return TRUE;
   }
   
-
+ /**
+  * Get history's peer 
+  */
+  function GetHistory($peer){
+  	if ($this->execCommand('history '. $peer)) {
+  	  $patern = array(
+  	  0 => '/\[(\d+\s\w+)\]\s(\w+)\s(«««|»»»)\s(.*)/',
+  	  );  	
+  	  $key = array(
+  	  0 => 'string',
+  	  1 => 'date',
+  	  2 => 'peer',
+  	  3 => 'direction',
+  	  4 => 'msg',);
+  	  return $this->parseResponse($patern,$key);
+  	}
+  }
+  
+  
   /**
    * Low level exec function.
    *
