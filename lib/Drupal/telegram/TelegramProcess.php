@@ -128,6 +128,7 @@ class TelegramProcess {
       foreach ($this->output as $index => $line) {
       	$this->debug($index);
         $matches = array();
+        $resultmed = array();
         foreach ($pattern as $patern) {
           if (preg_match($patern, $line, $matches)) {
             // Yeah, line matches expected format.
@@ -135,7 +136,7 @@ class TelegramProcess {
             $resultmed[] = array(
               'matches' => $matches,
             );
-            $this->debug($result);
+            $this->debug($resultmed);
             // Remove it from buffer.
             unset($this->output[$index]);
           }

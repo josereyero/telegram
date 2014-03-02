@@ -93,15 +93,35 @@ class TelegramClient {
 
   /**
    * Get list of current dialogs.
+   * @params filter 1 for all, 2 for read, 3 for unread
    */
-  function getDialogList() {
+  function getDialogList($filter) {
     if ($this->execCommand('dialog_list')) {
       // @todo Add the right regexp format for the response.
       
-      $patern = array(
-      0=> '/^User\s([\w\s]+)\:\s(\d+)\s(\w+)$/u',
-      );
-      $key = array();
+      if ($filter == 1)
+        {
+          $patern = array(
+          0=> '/^User\s([\w\s]+)\:\s(\d+)\s(\w+)$/u',
+          );
+        }
+      if ($filter == 2)
+      {
+      	 $patern = array(
+      	 0 => '/^User\s([\w\s]+)\:\s(0)\s(\w+)$/u',
+      	 );
+      }
+      if ($filter == 3)
+      {
+      	$patern = array(
+      	0 => '/^User\s([\w\s]+)\:\s(1)\s(\w+)$/u',
+      	);
+      }
+      $key = array(
+      0 => 'string',
+       1 => 'user',
+       2 => 'messages',
+       3 => 'state');
       return $this->parseResponse($patern, $key);
     }
   }
