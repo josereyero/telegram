@@ -128,10 +128,11 @@ class TelegramClient {
 
   /**
    * Add contact
+   *
    * Add contact can change a name contact
    */
-  function AddContact($phone, $fname, $sname) {
-  	$output = $this->execCommand('add_contact ' . $phone . ' ' .  $fname . ' ' . $sname);
+  function addContact($phone, $first_name, $last_name) {
+  	$output = $this->execCommand('add_contact', $phone . ' ' .  $first_name . ' ' . $last_sname);
   	 // @TODO test the exit of the command
   	return TRUE;
   }
@@ -139,16 +140,16 @@ class TelegramClient {
   /**
    * Rename contact
    */
-  function RenameContact($peer, $fname, $sname){
-  	$output = $this->execCommand('rename_contact ' . $peer . ' ' . $fname . ' '. $sname);
+  function renameContact($peer, $first_name, $last_name){
+  	$output = $this->execCommand('rename_contact', $peer . ' ' . $fname . ' '. $sname);
   	return TRUE;
   }
 
  /**
   * Get history's peer
   */
-  function GetHistory($peer){
-  	if ($this->execCommand('history '. $peer)) {
+  function getHistory($peer){
+  	if ($this->execCommand('history', $peer)) {
   	  $patern = array(
   	  0 => '/\[(\d+\s\w+)\]\s(\w+)\s(«««|»»»)\s(.*)/',
   	  );
@@ -165,8 +166,8 @@ class TelegramClient {
   /**
    * Mark as read messages of a peer
    */
-  function MarkAsRead($peer){
-  	$output = $this->execCommand('mark_read ' . $peer );
+  function markAsRead($peer){
+  	$output = $this->execCommand('mark_read', $peer );
   	return TRUE;
   }
 

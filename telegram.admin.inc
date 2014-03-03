@@ -133,7 +133,7 @@ function telegram_contact_list() {
     $rows[] = array(
       check_plain($contact->peer),
       check_plain($contact->name),
-      check_plain($contact->phone),
+      check_plain($contact->number),
     );
   }
   return theme('table', array('header' => $header, 'rows' => $rows));

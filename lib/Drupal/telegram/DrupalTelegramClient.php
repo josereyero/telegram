@@ -36,9 +36,6 @@ class DrupalTelegramClient extends TelegramClient {
    */
   public function __construct(array $params) {
     parent::__construct($params);
-    // This is test data
-    $contact = $this->createContact(array('phone' => '99123123123', 'peer' => 'Jose_Reyero', 'name' => 'Jose Reyero'));
-    $this->inbox[] = new TelegramMessage(array('from' => $contact, 'text' => 'Hello, nice day!'));
   }
 
   /**
@@ -47,12 +44,8 @@ class DrupalTelegramClient extends TelegramClient {
    * @return Drupal/telegram/TelegramContact
    */
   public function getContactByPhone($phone) {
-    if (isset($this->contacts[$phone])) {
-      return $this->contacts[$phone];
-    }
-    else {
-      return $this->createContact(array('phone' => $phone));
-    }
+    $contacts = $this->getContactList();
+    return isset($contacts[$phone]) ? $contacts[$phone] : NULL;
   }
 
   /**
@@ -121,17 +114,6 @@ class DrupalTelegramClient extends TelegramClient {
   public function readMessages() {
     if (!isset($this->inbox)) {
       $this->inbox = array();
-    }
-  }
-
-  /**
-   * Read contact list.
-   */
-  public function readContactList() {
-    if (!isset($this->contacts)) {
-      foreach ($this->getContactList() as $data) {
-        $this->createContact($data);
-      }
     }
   }
 
