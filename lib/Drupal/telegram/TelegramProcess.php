@@ -125,12 +125,13 @@ class TelegramProcess {
     if (!empty($this->output)) {
       $result = array();
 	   
+      $resultmed = array();
       foreach ($this->output as $index => $line) {
       	$this->debug($index);
         $matches = array();
-        $resultmed = array();
-        foreach ($pattern as $patern) {
-          if (preg_match($patern, $line, $matches)) {
+        
+        foreach ($pattern as $patterns) {
+          if (preg_match($patterns, $line, $matches)) {
             // Yeah, line matches expected format.
             // First add it to result.
             $resultmed[] = array(
