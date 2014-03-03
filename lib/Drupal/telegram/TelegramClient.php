@@ -73,17 +73,17 @@ class TelegramClient {
 		    0=>'/User\s\#(\d+)\:\s([\w\s]+)\s\((\w+)\s(\d+)\)\s(\offline)\.\s\w+\s\w+\s\[(\w+\/\w+\/\w+)\s(\w+\:\w+\:\w+)\]/u',
 		    1=>'/User\s\#(\d+)\:\s([\w\s]+)\s\((\w+)\s(\d+)\)\s(\online)/',
 		     );
-		  
+
 		    $key = array(
 		    0 => 'string',
 		    1 => 'id',
-		    2 => 'namea',
-		    3 => 'nameb',
+		    2 => 'name',
+		    3 => 'peer',
 		    4 => 'number',
 		    5 => 'status',
 		    6 => 'date',
 		    7 => 'hour',);
-    	    $response = $this->parseResponse($patern, $key);
+    	    $response = $this->parseResponse($patern, $key, 'number');
     	    // @todo Parse response into a named array
     	    $this->contacts = $response;
 		  }
@@ -98,7 +98,7 @@ class TelegramClient {
   function getDialogList($filter) {
     if ($this->execCommand('dialog_list')) {
       // @todo Add the right regexp format for the response.
-      
+
       if ($filter == 1)
         {
           $patern = array(
@@ -143,15 +143,15 @@ class TelegramClient {
   	$output = $this->execCommand('rename_contact ' . $peer . ' ' . $fname . ' '. $sname);
   	return TRUE;
   }
-  
+
  /**
-  * Get history's peer 
+  * Get history's peer
   */
   function GetHistory($peer){
   	if ($this->execCommand('history '. $peer)) {
   	  $patern = array(
   	  0 => '/\[(\d+\s\w+)\]\s(\w+)\s(«««|»»»)\s(.*)/',
-  	  );  	
+  	  );
   	  $key = array(
   	  0 => 'string',
   	  1 => 'date',
@@ -161,15 +161,15 @@ class TelegramClient {
   	  return $this->parseResponse($patern,$key);
   	}
   }
-  
+
   /**
-   * Mark as read messages of a peer 
+   * Mark as read messages of a peer
    */
   function MarkAsRead($peer){
   	$output = $this->execCommand('mark_read ' . $peer );
-  	return TRUE; 	
-  }	
-  
+  	return TRUE;
+  }
+
   /**
    * Low level exec function.
    *
@@ -191,21 +191,24 @@ class TelegramClient {
   /**
    * Parse process response.
    *
-   * @param $pattern
+   * @param string|array $pattern
    *   Regexp with the response format.
+   * @param array mapping
+   *   Field mapping.
+   * @param string index_field
    *
-   * @return array|NULL
-   *   Response array if any.
+   * @return array
+   *   Response array with objects indexed by index_field.
    */
-  protected function parseResponse($pattern = NULL, $key) {
-    if ($process = $this->getProcess()) {
-    	if (!empty($key)){
-          return $process->parseResponse($pattern, $key);
-    	}
-    	else {
-    	  return $process->parseResponse($pattern);	
-    	}
+  protected function parseResponse($pattern = NULL, $mapping = array(), $index_field = NULL) {
+    $response = array();
+    if (($process = $this->getProcess()) && ($list = $process->parseResponse($pattern, $mapping))) {
+      foreach ($list as $key => $data) {
+        $index = $index_field ? $data[$index_field] : $key;
+        $response[$index] = (object)$data;
+      }
     }
+    return $response;
   }
 
   /**

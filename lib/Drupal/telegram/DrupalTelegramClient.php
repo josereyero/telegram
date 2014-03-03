@@ -80,8 +80,6 @@ class DrupalTelegramClient extends TelegramClient {
     }
   }
 
-
-
   /**
    * Read all pending incoming messages.
    */
