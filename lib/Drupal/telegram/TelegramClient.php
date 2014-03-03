@@ -11,11 +11,6 @@ use \streamWrapper;
 
 class TelegramClient {
 
-  // Regexps to parse response elements.
-  const RX_USER = '[\w\s]+'; // Jose Reyero
-  const RX_DATE = '\[[\w\s\:]\]'; // [20 Feb], [15:19]
-  const RX_PENDING = '\d+\sunread'; // 0 unread
-
   /**
    * Running parameters to pass to the process.
    *
@@ -192,7 +187,7 @@ class TelegramClient {
   /**
    * Parse process response.
    *
-   * @param string|array $pattern
+   * @param strwhatsapping|array $pattern
    *   Regexp with the response format.
    * @param array mapping
    *   Field mapping.
@@ -251,30 +246,5 @@ class TelegramClient {
     }
   }
 
-  /**
-   *
-   * Parser for contact_list lines
-   * return @array
-   */
-  function ParseContactList($cadena)
-    {
-	  $replace = array('(', ')', '[', ']', ':', '"', '#','.');
-	  $idinit = strpos($cadena, '#')+1;
-	  $idend = strpos($cadena, ':');
-	  $cnameend = strpos($cadena, '(');
-	  $cnameoend = strpos($cadena, ')');
-	  $cnameocon = str_replace($replace, '', substr($cadena, $cnameend, $cnameoend));
-	  $statusinit = strpos($cadena, ')');
-	  $statusend = strpos($cadena, '.');
-	  $lastcondinit = strpos($cadena, '[');
-	  $lastconhend = strpos($cadena, ']');
-	  $linea['usid'] = substr($cadena, $idinit, $idend-$idinit);
-	  $linea['cname'] =  substr($cadena, $idend+2, $cnameend-$idend-2);
-	  sscanf ($cnameocon, '%s %s', $linea['cnameo'], $linea['number'] );
-	  $linea['lastcond'] = substr($cadena, $lastcondinit+1, 10);
-	  $linea['lastconh'] = substr($cadena, $lastcondinit+11, 9);
-	  $this->contacts[] = $linea;
-	  return $this->$linea;
-  }
 
 }
