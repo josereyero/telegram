@@ -69,7 +69,7 @@ class TelegramClient {
   function getContactList() {
     if (!isset($this->contacts)) {
 		  if ($this->execCommand('contact_list')) {
-		    $patern = array(
+		    $pattern = array(
 		    0=>'/User\s\#(\d+)\:\s([\w\s]+)\s\((\w+)\s(\d+)\)\s(\offline)\.\s\w+\s\w+\s\[(\w+\/\w+\/\w+)\s(\w+\:\w+\:\w+)\]/u',
 		    1=>'/User\s\#(\d+)\:\s([\w\s]+)\s\((\w+)\s(\d+)\)\s(\online)/',
 		     );
@@ -83,7 +83,7 @@ class TelegramClient {
 		    5 => 'status',
 		    6 => 'date',
 		    7 => 'hour',);
-    	    $response = $this->parseResponse($patern, $key, 'number');
+    	    $response = $this->parseResponse($pattern, $key, 'number');
     	    // @todo Parse response into a named array
     	    $this->contacts = $response;
 		  }
@@ -95,25 +95,25 @@ class TelegramClient {
    * Get list of current dialogs.
    * @params filter 1 for all, 2 for read, 3 for unread
    */
-  function getDialogList($filter) {
+  function getDialogList($filter = 1) {
     if ($this->execCommand('dialog_list')) {
       // @todo Add the right regexp format for the response.
 
       if ($filter == 1)
         {
-          $patern = array(
+          $pattern = array(
           0=> '/^User\s([\w\s]+)\:\s(\d+)\s(\w+)$/u',
           );
         }
       if ($filter == 2)
       {
-      	 $patern = array(
+      	 $pattern = array(
       	 0 => '/^User\s([\w\s]+)\:\s(0)\s(\w+)$/u',
       	 );
       }
       if ($filter == 3)
       {
-      	$patern = array(
+      	$pattern = array(
       	0 => '/^User\s([\w\s]+)\:\s(1)\s(\w+)$/u',
       	);
       }
@@ -122,7 +122,7 @@ class TelegramClient {
        1 => 'user',
        2 => 'messages',
        3 => 'state');
-      return $this->parseResponse($patern, $key);
+      return $this->parseResponse($pattern, $key);
     }
   }
 
@@ -150,7 +150,7 @@ class TelegramClient {
   */
   function getHistory($peer){
   	if ($this->execCommand('history', $peer)) {
-  	  $patern = array(
+  	  $pattern = array(
   	  0 => '/\[(\d+\s\w+)\]\s(\w+)\s(«««|»»»)\s(.*)/',
   	  );
   	  $key = array(
@@ -159,7 +159,7 @@ class TelegramClient {
   	  2 => 'peer',
   	  3 => 'direction',
   	  4 => 'msg',);
-  	  return $this->parseResponse($patern,$key);
+  	  return $this->parseResponse($pattern,$key);
   	}
   }
 
