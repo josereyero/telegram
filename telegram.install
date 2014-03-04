@@ -20,12 +20,9 @@ function telegram_schema() {
       ),
       'id' => array(
         'description' => "The unique Telegram identifier of the {telegram_contact}.",
-        'type' => 'numeric',
-        'unsigned' => TRUE,
-        'precision' => 20,
-        'scale' => 0,
-        'not null' => TRUE,
-        'default' => 0,
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
       ),
       'phone' => array(
         'description' => "The unique peer name of the {telegram_contact} user.",
@@ -104,12 +101,9 @@ function telegram_schema() {
       ),
       'id' => array(
         'description' => "Telegram unique identifier for each {telegram_message}.",
-        'type' => 'numeric',
-        'unsigned' => TRUE,
-        'precision' => 20,
-        'scale' => 0,
-        'not null' => TRUE,
-        'default' => 0,
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
       ),
       'peer' => array(
         'description' => "Name of the {telegram_contact} peer.",
