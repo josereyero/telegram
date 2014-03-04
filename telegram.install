@@ -148,16 +148,19 @@ function telegram_schema() {
         'description' => "A UNIX timestamp indicated when the message was created.",
         'type' => 'int',
         'not null' => TRUE,
+        'default' => 0,
       ),
       'sent' => array(
         'description' => "A UNIX timestamp indicated when the message was sent.",
         'type' => 'int',
         'not null' => TRUE,
+        'default' => 0,
       ),
       'received' => array(
         'description' => "A UNIX timestamp indicated when the message was received.",
         'type' => 'int',
         'not null' => TRUE,
+        'default' => 0,
       ),
       'updated' => array(
         'description' => "A UNIX timestamp marking the date Telegram contacts were last fetched on.",

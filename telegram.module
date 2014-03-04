@@ -110,7 +110,8 @@ function telegram_manager() {
         'keyfile' => variable_get_value('telegram_command_key'),
         'homepath' => variable_get_value('telegram_command_cwd'),
         'configfile' => variable_get_value('telegram_config_path'),
-        'debug' => variable_get_value('telegram_command_debug')
+        'debug' => variable_get_value('telegram_command_debug'),
+        'logfile' => '/tmp/drupal-telegram.log',
     ));
     $manager = new DrupalTelegramManager($client, new DrupalTelegramStorage());
   }

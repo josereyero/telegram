@@ -61,7 +61,7 @@ class DrupalTelegramManager {
   /**
    * Get contact for phone.
    */
-  function getPhoneContact($phone) {
+  function getContactByPhone($phone) {
     $contacts = $this->getStorage()->contactLoadMultiple(array('phone' => $phone));
     return reset($contacts);
   }
@@ -72,20 +72,27 @@ class DrupalTelegramManager {
    * @todo Create better names from user accounts.
    */
   function createUserContact($account, $phone) {
-    $first_name = 'Drupal';
-    $last_name = 'User' . $account->uid;
-    $contact = new TelegramContact(array(
-      'uid' => $account->uid,
-      'source' => 'drupal',
-      'phone' => $phone,
-      'name' => $first_name . ' ' . $last_name,
-      'peer' => $first_name . '_' . $last_name,
-    ));
+    // Check for existing contact first.
+    $contact = $this->getContactByPhone($phone);
+
+    if (!$contact) {
+      $first_name = 'Drupal';
+      $last_name = 'User' . $account->uid;
+      $contact = new TelegramContact(array(
+        'uid' => $account->uid,
+        'source' => 'drupal',
+        'phone' => $phone,
+        'name' => $first_name . ' ' . $last_name,
+        'peer' => $first_name . '_' . $last_name,
+      ));
+      // Add telegram contact if newly created.
+      $result = $this->getClient()->addContact($phone, $first_name, $last_name);
+    }
+    $contact->uid = $account->uid;
+    $contact->verified = 0;
     $code = $contact->getVerificationCode(TRUE);
 
-    // Add telegram contact.
-    $result = $this->getClient()->addContact($phone, $first_name, $last_name);
-    $contact->status = $result ? TelegramContact::STATUS_DONE : TelegramContact::STATUS_ERROR;
+    //$contact->status = $result ? TelegramContact::STATUS_DONE : TelegramContact::STATUS_ERROR;
 
     $this->saveContact($contact);
 
@@ -124,8 +131,8 @@ class DrupalTelegramManager {
    */
   function verifyContact($contact, $code) {
     if ($contact->getVerificationCode() === $code) {
-      $contact->vefified = 1;
-      $this->getStorage()->contactSave($contact);
+      $contact->verified = 1;
+      $this->saveContact($contact);
       return TRUE;
     }
     else {
@@ -146,9 +153,8 @@ class DrupalTelegramManager {
    * @param DrupalTelegramMessage $message
    */
   function sendMessage($message) {
-    $contact = $message->getContact();
     $message->type = 'outgoing';
-    $result = $this->getClient()->sendMessage($contact->getPeer(), $message->getText());
+    $result = $this->getClient()->sendMessage($message->peer, $message->text);
     if ($result) {
       $message->sent = REQUEST_TIME;
       $message->status = $message::STATUS_DONE;
@@ -180,7 +186,7 @@ class DrupalTelegramManager {
       if (isset($telegram[$contact->phone])) {
         // Existing contact, update values
         $contact->setData($telegram[$contact->phone]);
-        $contact->save();
+        $this->saveContact($contact);
         // Remove from array
         unset($telegram[$contact->phone]);
       }

@@ -26,7 +26,8 @@ class TelegramClient {
   protected $logs = array();
 
   // Debug level
-  protected $debug = 1;
+  protected $logLevel = 0;
+  protected $logFile;
 
   /**
    * Class constructor.
@@ -35,7 +36,15 @@ class TelegramClient {
     // Add some defaults
     $params += array('debug' => 0);
     $this->params = $params;
-    $this->debug = $params['debug'];
+    $this->logLevel = $params['debug'] ? 0 : 1;
+    if (!empty($params['logfile'])) {
+      if ($file = fopen($params['logfile'], 'a')) {
+        $this->logFile = $file;
+      }
+      else {
+        $this->logError('Error opening log file', $params['logfile']);
+      }
+    }
   }
 
   /**
@@ -221,15 +230,15 @@ class TelegramClient {
    */
   function start() {
     if (!isset($this->process)) {
-
-      $process = new TelegramProcess($this->params);
+      $process = new TelegramProcess($this->params, $this);
       if ($process->start()) {
         // Process started OK
         $this->process = $process;
+        $this->logInfo('Process started from client');
       }
       else {
         // Process start failed, set to FALSE so we don't try to create it again.
-        $process->log('Failed process start');
+        $this->logError('Failed process start');
         $this->process = FALSE;
         throw new Exception('Telegram process failed to start');
       }
@@ -241,8 +250,13 @@ class TelegramClient {
    */
   function stop() {
     if (isset($this->process)) {
+      $this->logInfo('Client stopping process');
       $this->process->close();
       unset($this->process);
+    }
+    if (isset($this->logFile)) {
+      fclose($this->logFile);
+      unset($this->logFile);
     }
   }
 
@@ -250,11 +264,61 @@ class TelegramClient {
   /**
    * Log line in output.
    */
+  function logInfo($message, $args = NULL) {
+    $this->log($message, $args, 1);
+  }
+
+  /**
+   * Log debug message.
+   */
+  function logDebug($message, $args = NULL) {
+    $this->log($message, $args, 0);
+  }
+
+
+  /**
+   * Log error message.
+   */
+  function logError($message, $args = NULL) {
+    $this->log($message, $args, 5);
+  }
+
+  /**
+   * Log debug message if in debug mode.
+   */
+  function debug($message, $args = NULL) {
+    $this->logDebug($message, $args);
+  }
+
+  /**
+   * Log message / mixed data.
+   *
+   * @param mixed $message
+   */
   function log($message, $args, $severity) {
-    //$this->output[] = $message;
-    if ($this->debug) {
-      print $message . "\n";
+    if ($severity >= $this->logLevel) {
+      $txt = is_string($message) ? $message : print_r($message, TRUE);
+      if ($args) {
+        $txt .= ': ';
+        $txt .= is_string($args) ? $args : print_r($args, TRUE);
+      }
+      $this->logs[] = $txt;
+      // Write to log file.
+      if (isset($this->logFile)) {
+        fwrite($this->logFile, $txt . "\n");
+      }
+      // Write to error log.
+      if ($severity >= 5) {
+        error_log($txt);
+      }
     }
+  }
+
+  /**
+   * Get logged messages.
+   */
+  function getLogs() {
+    return isset($this->logs) ? $this->logs : array();
   }
 
 }

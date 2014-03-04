@@ -126,13 +126,15 @@ function telegram_test_form_submit($form, &$form_state) {
  */
 function telegram_contact_list() {
   $contact_list = telegram_manager()->getContactList();
-  $header = array(t('Peer'), t('Name'), t('Phone'));
+  $header = array(t('Uid'), t('Peer'), t('Name'), t('Phone'), t('Id'), );
   $rows = array();
   foreach ($contact_list as $contact) {
     $rows[] = array(
+      $contact->uid,
       check_plain($contact->peer),
       check_plain($contact->name),
       check_plain($contact->phone),
+      $contact->id,
     );
   }
   return theme('table', array('header' => $header, 'rows' => $rows));
