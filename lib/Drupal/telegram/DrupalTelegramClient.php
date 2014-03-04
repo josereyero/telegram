@@ -15,13 +15,6 @@ namespace Drupal\telegram;
 class DrupalTelegramClient extends TelegramClient {
 
   /**
-   * Contacts indexed by phone number
-   *
-   * @var array
-   */
-  protected $contacts;
-
-  /**
    * Inbox, outbox.
    *
    * @var array
@@ -49,15 +42,6 @@ class DrupalTelegramClient extends TelegramClient {
   }
 
   /**
-   * Create contact. Data must contain at least phone number.
-   */
-  protected function createContact(array $data) {
-    $contact = new TelegramContact($data);
-    $this->contacts[$contact->getPhone()] = $contact;
-    return $contact;
-  }
-
-  /**
    * Send message to phone number.
    *
    * @param string $phone
@@ -66,10 +50,11 @@ class DrupalTelegramClient extends TelegramClient {
    * @return array|FALSE
    */
   public function sendToPhone($phone, $text) {
-    $message = new TelegramMessage(array('to' => $contact, 'text' => $text));
-    if ($contact = $this->getContactByPhone()) {
-
-      return $this->sendMessage($message);
+    if ($contact = $this->getContactByPhone($phone)) {
+      return $this->sendMessage($contact->peer, $text);
+    }
+    else {
+      return FALSE;
     }
   }
 
@@ -82,7 +67,7 @@ class DrupalTelegramClient extends TelegramClient {
   }
 
   /**
-   * @todo Lower level methods to be implemented property.
+   * @todo Lower level methods to be implemented properly.
    */
 
   /**
@@ -95,16 +80,6 @@ class DrupalTelegramClient extends TelegramClient {
    */
   public function sendToPeer($peer, $message) {
     return $this->sendMessage($peer, $message);
-  }
-
-  /**
-   * Add new contact.
-   */
-  public function addNewContact($phone, $first_name, $last_name) {
-    $name = trim($first_name) . ' ' . trim($last_name);
-    $peer = $this->nameToPeer($name);
-    // @todo Actually create contact.
-    $contact = $this->createContact(array('phone' => $phone, 'name' => name, 'peer' => $peer));
   }
 
   /**

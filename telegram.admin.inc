@@ -42,11 +42,11 @@ function telegram_send_form_submit($form, &$form_state) {
   if ($to && $text) {
     drupal_set_message(t('Sending'));
     if (is_numeric($to)) {
-      $result = $client->sendToPhone($to, $text);
+      $result = telegram_send_phone($to, $text);
     }
     else {
       $to = $client->nameToPeer($to);
-      $result = $client->sendToPeer($to, $text);
+      $result = telegram_send_peer($to, $text);
     }
     $output['result'] = $result;
   }
@@ -85,8 +85,7 @@ function telegram_contact_list_form($form, &$form_state) {
  * Test form submit.
  */
 function telegram_contact_list_form_submit($form, &$form_state) {
-  $client = telegram_client();
-  $client->getContactList();
+  telegram_manager()->refreshContactList();
   // Add debug output.
   _telegram_debug_form($form, $form_state);
   $form_state['rebuild'] = TRUE;
@@ -126,14 +125,14 @@ function telegram_test_form_submit($form, &$form_state) {
  * Print contact list.
  */
 function telegram_contact_list() {
-  $contact_list = telegram_client()->getContactList();
+  $contact_list = telegram_manager()->getContactList();
   $header = array(t('Peer'), t('Name'), t('Phone'));
   $rows = array();
   foreach ($contact_list as $contact) {
     $rows[] = array(
       check_plain($contact->peer),
       check_plain($contact->name),
-      check_plain($contact->number),
+      check_plain($contact->phone),
     );
   }
   return theme('table', array('header' => $header, 'rows' => $rows));

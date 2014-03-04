@@ -1,0 +1,54 @@
+<?php
+
+/**
+ * @file
+ * Telegram account module
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function telegram_account_menu() {
+  $items['user/%user/edit/telegram'] = array(
+    'title' => 'Telegram',
+    'page callback' => 'telegram_account_contact_page',
+    'page arguments' => array(1),
+    'access callback' => 'telegram_account_access',
+    'access arguments' => array(1),
+    'file' => 'telegram_account.pages.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
+  return $items;
+}
+
+/**
+ * Access callback for the Telegram accounts page.
+ *
+ * @return
+ *   Boolean TRUE if the current user has access.
+ */
+function telegram_account_access($account) {
+  global $user;
+
+  return !empty($account->uid) && user_access('receive telegram notifications', $account) &&
+    (user_edit_access($account) || user_access('manage telegram contacts'));
+}
+
+/**
+ * Implements hook_user_load().
+ */
+function telegram_account_user_load($users) {
+  $contacts = telegram_manager()->getStorage()->contactLoadMultiple(array('uid' => array_keys($users)));
+  foreach ($contacts as $contact) {
+    $users[$contact->uid]->telegram = $contact;
+  }
+}
+
+/**
+ * Implements hook_user_view() {
+ */
+function telegram_account_user_view($account, $view_mode, $langcode) {
+  if (user_access('')) {
+
+  }
+}

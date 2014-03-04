@@ -1,0 +1,6 @@
+name = Telegram account
+description = Links telegram contacts with user accounts.
+core = 7.x
+dependencies[] = telegram
+package = Telegram
+

@@ -1,0 +1,181 @@
+<?php
+/**
+ * @file
+ * Install, update and uninstall functions for the telegram module.
+ *
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function telegram_schema() {
+  $schema['telegram_contact'] = array(
+    'description' => "Stores information on specific Telegram contact.",
+    'fields' => array(
+      'oid' => array(
+        'description' => 'The primary internal identifier for a contact.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'id' => array(
+        'description' => "The unique Telegram identifier of the {telegram_contact}.",
+        'type' => 'numeric',
+        'unsigned' => TRUE,
+        'precision' => 20,
+        'scale' => 0,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'phone' => array(
+        'description' => "The unique peer name of the {telegram_contact} user.",
+        'type' => 'varchar',
+        'length' => 255,
+      ),
+      'peer' => array(
+        'description' => "The unique peer name of the {telegram_contact} user.",
+        'type' => 'varchar',
+        'length' => 255,
+      ),
+      'name' => array(
+        'description' => "The full name of the {telegram_contact} user.",
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'source' => array(
+        'description' => "The source of the telegram contact (telegram, created, message).",
+        'type' => 'varchar',
+        'length' => 50,
+        'not null' => TRUE,
+        'default' => 'telegram',
+      ),
+      'uid' => array(
+        'description' => "The Drupal uid of the user who owns this Telegram account.",
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'verification' => array(
+        'description' => "The verification code sent to the contact.",
+        'type' => 'varchar',
+        'length' => 50,
+        'not null' => TRUE,
+        'default' => 'telegram',
+      ),
+      'verified' => array(
+        'description' => "Indicates if a user is verified.",
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'created' => array(
+        'description' => "A duplicate of {telegram_contact}.created_at in UNIX timestamp format.",
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'updated' => array(
+        'description' => "A UNIX timestamp marking the date Telegram contacts were last fetched on.",
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'online' => array(
+        'description' => "A UNIX timestamp marking the last time the contact was seen online.",
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'indexes' => array('peer' => array('peer'), 'phone' => array('phone')),
+    'primary key' => array('oid'),
+  );
+  $schema['telegram_message'] = array(
+    'description' => "Stores individual Telegram messages.",
+    'fields' => array(
+      'oid' => array(
+        'description' => 'The primary internal identifier for a message.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'id' => array(
+        'description' => "Telegram unique identifier for each {telegram_message}.",
+        'type' => 'numeric',
+        'unsigned' => TRUE,
+        'precision' => 20,
+        'scale' => 0,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'peer' => array(
+        'description' => "Name of the {telegram_contact} peer.",
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'phone' => array(
+        'description' => "Phone number of the {telegram_contact} peer.",
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'type' => array(
+        'description' => "Message type. Possible values are 'incoming', 'outgoing'",
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+      ),
+      'text' => array(
+        'description' => "The text of the {telegram_message}.",
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+      ),
+      'source' => array(
+        'description' => "The application that created the {telegram_message}.",
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+      ),
+      'status' => array(
+        'description' => "The internal status. Possible values are 0 = done, 1 = queued, 2 = error",
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'created' => array(
+        'description' => "A UNIX timestamp indicated when the message was created.",
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'sent' => array(
+        'description' => "A UNIX timestamp indicated when the message was sent.",
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'received' => array(
+        'description' => "A UNIX timestamp indicated when the message was received.",
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'updated' => array(
+        'description' => "A UNIX timestamp marking the date Telegram contacts were last fetched on.",
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'indexes' => array('peer' => array('peer'), 'id' => array('id')),
+    'primary key' => array('oid'),
+  );
+
+  return $schema;
+}
+

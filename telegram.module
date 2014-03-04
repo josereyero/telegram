@@ -12,6 +12,8 @@
  */
 
 use Drupal\telegram\DrupalTelegramClient;
+use Drupal\telegram\DrupalTelegramStorage;
+use Drupal\telegram\DrupalTelegramManager;
 
 /**
  * Implements hook_menu().
@@ -64,7 +66,27 @@ function telegram_menu() {
  * Send message to phone number.
  */
 function telegram_send_phone($phone, $text) {
-  return telegram_client()->sendToPhone($phone, $text);
+  if ($contact = telegram_manager()->getContactByPhone($phone)) {
+    return telegram_send_peer($contact->peer, $text);
+  }
+  else {
+    drupal_set_message(t('Cannot find contact for phone @number', array('@number' => $to)), 'warning');
+    return FALSE;
+  }
+}
+
+/**
+ * Send message to peer.
+ */
+function telegram_send_peer($peer, $text) {
+  if (telegram_client()->sendMessage($peer, $text)) {
+    drupal_set_message(t('Telegram message sent successfully.'));
+    return TRUE;
+  }
+  else {
+    drupal_set_message(t('Error sending Telegram message'));
+    return FALSE;
+  }
 }
 
 /**
@@ -75,20 +97,30 @@ function telegram_send_user($account, $text) {
 }
 
 /**
+ * Get Telegram manager.
+ *
+ * @return DrupalTelegramManager
+ */
+function telegram_manager() {
+  static $manager;
+
+  if (!isset($manager)) {
+    $client = new DrupalTelegramClient(array(
+        'command' => variable_get_value('telegram_command_exec'),
+        'keyfile' => variable_get_value('telegram_command_key'),
+        'homepath' => variable_get_value('telegram_command_cwd'),
+        'configfile' => variable_get_value('telegram_config_path'),
+        'debug' => variable_get_value('telegram_command_debug')
+    ));
+    $manager = new DrupalTelegramManager($client, new DrupalTelegramStorage());
+  }
+
+  return $manager;
+}
+
+/**
  * Get Telegram client
  */
 function telegram_client() {
-  static $client;
-
-  if (!isset($slient)) {
-    $client = new DrupalTelegramClient(array(
-      'command' => variable_get_value('telegram_command_exec'),
-      'keyfile' => variable_get_value('telegram_command_key'),
-      'homepath' => variable_get_value('telegram_command_cwd'),
-      'configfile' => variable_get_value('telegram_config_path'),
-      'debug' => variable_get_value('telegram_command_debug')
-    ));
-  }
-
-  return $client;
+  return telegram_manager()->getClient();
 }

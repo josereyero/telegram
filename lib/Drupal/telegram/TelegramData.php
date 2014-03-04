@@ -9,7 +9,21 @@
 
 namespace Drupal\telegram;
 
-class TelegramData {
+abstract class TelegramData {
+
+  /**
+   * Primary object id.
+   *
+   * @var int
+   */
+  public $oid = NULL;
+  /**
+   * Timestamps
+   *
+   * @var int
+   */
+  public $created;
+  public $updated;
 
   /**
    * Construct from array.

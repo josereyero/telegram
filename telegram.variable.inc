@@ -10,7 +10,11 @@
 function telegram_variable_info($options) {
   $variables['telegram_site_number'] = array(
     'type' => 'string',
-    'title' => t('Site number', array(), $options),
+    'title' => t('Site phone number', array(), $options),
+  );
+  $variables['telegram_site_contact'] = array(
+    'type' => 'string',
+    'title' => t('Site contact name', array(), $options),
   );
   $variables['telegram_command_exec'] = array(
     'type' => 'string',
