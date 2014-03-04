@@ -8,6 +8,7 @@
 namespace Drupal\telegram;
 
 use \streamWrapper;
+use \Exception;
 
 class TelegramClient {
 
@@ -74,11 +75,11 @@ class TelegramClient {
 		    1 => 'id',
 		    2 => 'name',
 		    3 => 'peer',
-		    4 => 'number',
+		    4 => 'phone',
 		    5 => 'status',
 		    6 => 'date',
 		    7 => 'hour',);
-    	    $response = $this->parseResponse($pattern, $key, 'number');
+    	    $response = $this->parseResponse($pattern, $key, 'phone');
     	    // @todo Parse response into a named array
     	    $this->contacts = $response;
 		  }
@@ -127,7 +128,7 @@ class TelegramClient {
    * Add contact can change a name contact
    */
   function addContact($phone, $first_name, $last_name) {
-  	$output = $this->execCommand('add_contact', $phone . ' ' .  $first_name . ' ' . $last_sname);
+  	$output = $this->execCommand('add_contact', $phone . ' ' .  $first_name . ' ' . $last_name);
   	 // @TODO test the exit of the command
   	return TRUE;
   }
@@ -211,9 +212,7 @@ class TelegramClient {
    * Start process.
    */
   function getProcess() {
-    if (!isset($this->process)) {
-      $this->start();
-    }
+    $this->start();
     return $this->process;
   }
 
@@ -221,9 +220,20 @@ class TelegramClient {
    * Start process.
    */
   function start() {
-    $this->process = new TelegramProcess($this->params);
-    $this->process->start();
-    sleep(1);
+    if (!isset($this->process)) {
+
+      $process = new TelegramProcess($this->params);
+      if ($process->start()) {
+        // Process started OK
+        $this->process = $process;
+      }
+      else {
+        // Process start failed, set to FALSE so we don't try to create it again.
+        $process->log('Failed process start');
+        $this->process = FALSE;
+        throw new Exception('Telegram process failed to start');
+      }
+    }
   }
 
   /**
@@ -236,15 +246,15 @@ class TelegramClient {
     }
   }
 
+
   /**
    * Log line in output.
    */
-  function log($message) {
+  function log($message, $args, $severity) {
     //$this->output[] = $message;
     if ($this->debug) {
       print $message . "\n";
     }
   }
-
 
 }

@@ -124,12 +124,12 @@ class TelegramProcess {
 
     if (!empty($this->output)) {
       $result = array();
-	   
+
       $resultmed = array();
       foreach ($this->output as $index => $line) {
       	$this->debug($index);
         $matches = array();
-        
+
         foreach ($pattern as $patterns) {
           if (preg_match($patterns, $line, $matches)) {
             // Yeah, line matches expected format.
@@ -147,16 +147,16 @@ class TelegramProcess {
           }
         }
       }
-      	  $countresult = count($resultmed);	
+      	  $countresult = count($resultmed);
 		  (isset($key)) ? $countkey = count($key):'';
 		  for ($i=0 ; $i<$countresult ; $i++){
 		  	(!isset($key)) ? $countkey = count($resultmed[$i]['matches']):'';
 		    $z=0;
-      		foreach ($resultmed[$i]['matches'] as $lines) {  
+      		foreach ($resultmed[$i]['matches'] as $lines) {
       		  if ($z == $countkey){
       		    $z=0;
       		  }
-      		  (isset($key)) ? $result[$i][$key[$z]] = $lines : $result[$i][$z] = $lines;	
+      		  (isset($key)) ? $result[$i][$key[$z]] = $lines : $result[$i][$z] = $lines;
       		  $z++;
       	    }
       	  }
@@ -187,12 +187,12 @@ class TelegramProcess {
    * @param boolean $wait
    *   Whether to wait until it is available.
    */
-  function readLine($wait = FALSE) {
-    //$this->debug('readLine');
+  function readLine($wait = FALSE, $timeout = NULL) {
+    $timeout = $timeout ? $timeout : time() + 10;
 
     $string = fgets($this->pipes[1]);
 
-    while ($wait && $string === FALSE) {
+    while ($wait && $string === FALSE && time() < $timeout) {
       $string = fgets($this->pipes[1]);
       $this->wait();
     }
@@ -210,16 +210,17 @@ class TelegramProcess {
    * @return array
    *   Array of (trimmed) string lines before the stop char.
    */
-  function readUntil($stop = '>') {
+  function readUntil($stop = '>', $timeout = NULL) {
+    $timeout = $timeout ? $timeout : time() + 10;
     $this->debug("readUntil $stop");
     $stop = trim($stop);
     $lines = array();
     $string = '';
-    while ($string !== $stop) {
+    while ($string !== $stop && time() < $timeout) {
       if ($string) {
         $lines[] = $string;
       }
-      $string = $this->readLine(TRUE);
+      $string = $this->readLine(TRUE, $timeout);
       $this->debug("readUntil [$string]");
     }
     return $lines;
@@ -265,14 +266,18 @@ class TelegramProcess {
       );
       $this->process = proc_open($this->commandLine, $descriptorspec, $this->pipes, $this->params['homepath']);
 
-      if ($this->process) {
+      if (is_resource($this->process)) {
         // Use non blocking streams.
         stream_set_blocking($this->pipes[1], 0);
         stream_set_blocking($this->pipes[2], 0);
+
         // Flush initial messages.
         // $this->flush();
 
         $this->wait(1000);
+
+        // Log initial status.
+        $this->debug($this->getStatus());
 
         $this->flush();
         //$this->readUntil('>');
@@ -284,6 +289,11 @@ class TelegramProcess {
           $this->debug("Process started");
         }
       }
+      else {
+        // Process failed, close everything.
+        $this->close();
+        return FALSE;
+      }
     }
     return is_resource($this->process);
   }
@@ -294,13 +304,22 @@ class TelegramProcess {
   function close() {
     if (isset($this->process)) {
       $this->debug("Closing");
-      $this->write("quit\n");
-      foreach ($this->pipes as $pipe) {
-        fclose($pipe);
-      };
-      $return = proc_close($this->process);
-      $this->debug("Return status: $return");
+      if (is_resource($this->process)) {
+        $this->write("quit\n");
+      }
+      if (is_array($this->pipes)) {
+        foreach ($this->pipes as $pipe) {
+          fclose($pipe);
+        };
+      }
+      if (is_resource($this->process)) {
+        $return = proc_close($this->process);
+        $this->debug("Return status: $return");
+      }
+
       unset($this->process);
+      unset($this->pipes);
+
       return $return;
     }
   }
@@ -358,4 +377,10 @@ class TelegramProcess {
     return isset($this->errors) ? $this->errors : NULL;
   }
 
+  /**
+   * Magic destruct. No need for explicit closing.
+   */
+  public function __destruct() {
+    $this->close();
+  }
 }
