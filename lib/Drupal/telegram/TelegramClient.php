@@ -157,14 +157,16 @@ class TelegramClient {
   function getHistory($peer, $limit = NULL){
   	if ($this->execCommand('history', $peer .' '.$limit)) {
   	  $pattern = array(
-  	  0 => '/\[(\d+\s\w+)\]\s(\w+)\s(«««|»»»)\s(.*)/',
+  	  0 => '/(\d+)\s\[(.*.)\]\s+(.*.)\s(«««|»»»|<<<|>>>)(.*)/u', 		 		
   	  );
+  	  
   	  $key = array(
-  	  0 => 'string',
-  	  1 => 'date',
-  	  2 => 'peer',
-  	  3 => 'direction',
-  	  4 => 'msg',);
+  	  0 => 'string',		
+  	  1 => 'idmsg',
+  	  2 => 'date',
+  	  3 => 'peer',
+  	  4 => 'direction',
+  	  5 => 'msg',);
   	  return $this->parseResponse($pattern,$key);
   	}
   }
