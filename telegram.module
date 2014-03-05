@@ -59,6 +59,14 @@ function telegram_menu() {
      'access arguments' => array('administer site configuration'),
      'file' => 'telegram.admin.inc',
    );
+      $items['admin/config/telegram/readmessages'] = array(
+     'title' => 'Read Messages',
+     'description' => 'Read Messages',
+     'page callback' => 'drupal_get_form',
+     'page arguments' => array('telegram_read_messages_form'),
+     'access arguments' => array('administer site configuration'),
+     'file' => 'telegram.admin.inc',
+   );
    return $items;
 }
 
