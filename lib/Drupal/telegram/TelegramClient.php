@@ -152,9 +152,10 @@ class TelegramClient {
 
  /**
   * Get history's peer
+  * @param $limit limit the results
   */
-  function getHistory($peer){
-  	if ($this->execCommand('history', $peer)) {
+  function getHistory($peer, $limit = NULL){
+  	if ($this->execCommand('history', $peer .' '.$limit)) {
   	  $pattern = array(
   	  0 => '/\[(\d+\s\w+)\]\s(\w+)\s(«««|»»»)\s(.*)/',
   	  );
