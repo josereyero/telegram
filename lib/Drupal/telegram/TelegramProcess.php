@@ -92,7 +92,7 @@ class TelegramProcess {
     // Save last command executed.
     $this->lastCommand = $command;
     // Write command to the process input.
-    $this->write($command . "\n", FALSE);
+    $this->write($command . "\n");
     // Read until prompt
     $response = $this->readUntil('>');
     // Get command response.
@@ -311,6 +311,10 @@ class TelegramProcess {
         $status = $this->getStatus();
         $pid = $status['pid'];
         $this->debug('Process status', $status);
+
+        // Wait for a while. For some reason it needs some waiting before
+        // we issue the first command.
+        $this->wait(100);
 
         //$this->flush();
         // Read until prompt.
