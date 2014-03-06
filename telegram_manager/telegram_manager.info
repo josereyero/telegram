@@ -1,0 +1,5 @@
+name = Telegram Manager
+description = Telegram interface with persistent storage, queueing, etc...
+core = 7.x
+package = Telegram
+dependencies[] = telegram

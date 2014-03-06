@@ -14,8 +14,6 @@
 use Drupal\telegram\TelegramLogger;
 use Drupal\telegram\TelegramProcess;
 use Drupal\telegram\DrupalTelegramClient;
-use Drupal\telegram\DrupalTelegramStorage;
-use Drupal\telegram\DrupalTelegramManager;
 
 /**
  * Implements hook_menu().
@@ -45,30 +43,7 @@ function telegram_menu() {
      'access arguments' => array('administer site configuration'),
      'file' => 'telegram.admin.inc',
    );
-   $items['admin/config/telegram/send'] = array(
-     'title' => 'Send',
-     'description' => 'Try sending messages manually',
-     'page callback' => 'drupal_get_form',
-     'page arguments' => array('telegram_send_form'),
-     'access arguments' => array('administer site configuration'),
-     'file' => 'telegram.admin.inc',
-   );
-   $items['admin/config/telegram/contacts'] = array(
-     'title' => 'Contacts',
-     'description' => 'Manage contact list',
-     'page callback' => 'drupal_get_form',
-     'page arguments' => array('telegram_contact_list_form'),
-     'access arguments' => array('administer site configuration'),
-     'file' => 'telegram.admin.inc',
-   );
-      $items['admin/config/telegram/readmessages'] = array(
-     'title' => 'Read Messages',
-     'description' => 'Read Messages',
-     'page callback' => 'drupal_get_form',
-     'page arguments' => array('telegram_read_messages_form'),
-     'access arguments' => array('administer site configuration'),
-     'file' => 'telegram.admin.inc',
-   );
+
    return $items;
 }
 
@@ -76,20 +51,25 @@ function telegram_menu() {
  * Send message to phone number.
  */
 function telegram_send_phone($phone, $text) {
-  if ($contact = telegram_manager()->getContactByPhone($phone)) {
+  if ($contact = telegram_instance()->getContactByPhone($phone)) {
     return telegram_send_peer($contact->peer, $text);
   }
   else {
-    drupal_set_message(t('Cannot find contact for phone @number', array('@number' => $to)), 'warning');
+    drupal_set_message(t('Cannot find contact for phone @number', array('@number' => $phone)), 'warning');
     return FALSE;
   }
 }
 
 /**
- * Send message to peer.
+ * Send message to peer, shorthand API function.
+ *
+ * @param string $peer
+ *   Peer name.
+ * @param string $text
+ *   Message text.
  */
 function telegram_send_peer($peer, $text) {
-  if (telegram_client()->sendMessage($peer, $text)) {
+  if (telegram_instance()->sendMessage($peer, $text)) {
     drupal_set_message(t('Telegram message sent successfully.'));
     return TRUE;
   }
@@ -100,41 +80,56 @@ function telegram_send_peer($peer, $text) {
 }
 
 /**
- * Send message to user.
- */
-function telegram_send_user($account, $text) {
-
-}
-
-/**
- * Get Telegram manager.
+ * Get telegram instance.
  *
- * @return DrupalTelegramManager
+ * This one will return client or manager depending on the enabled modules.
+ *
+ * @todo Add a proper TelegramInterface
+ *
+ * @return TelegramClient|TelegramManager
  */
-function telegram_manager() {
-  $objects = &drupal_static(__FUNCTION__);
-
-  if (!$objects) {
-    $params = array(
-        'command' => variable_get_value('telegram_command_exec'),
-        'keyfile' => variable_get_value('telegram_command_key'),
-        'homepath' => variable_get_value('telegram_command_cwd'),
-        'configfile' => variable_get_value('telegram_config_path'),
-        'log_level' => variable_get_value('telegram_command_debug') ? 0 : 1,
-        'log_file' => '/tmp/drupal-telegram.log',
-    );
-    $objects['logger'] = new TelegramLogger($params);
-    $objects['process'] = new TelegramProcess($params, $objects['logger']);
-    $objects['client'] = new DrupalTelegramClient($objects['process'], $objects['logger']);
-    $objects['manager'] = new DrupalTelegramManager($objects['client'], new DrupalTelegramStorage());
-  }
-
-  return $objects['manager'];
+function telegram_instance() {
+  return function_exists('telegram_manager') ? telegram_manager() : telegram_client();
 }
 
 /**
  * Get Telegram client
+ *
+ * @return TelegramClient
  */
 function telegram_client() {
-  return telegram_manager()->getClient();
+  $telegram = &drupal_static('telegram');
+  if (!isset($telegram['client'])) {
+    $logger = telegram_logger();
+    $process = TelegramProcess(_telegram_params(), $logger);
+    $telegram['client'] =  new DrupalTelegramClient($process, $logger);
+  }
+  return $telegram['client'];
+}
+
+/**
+ * Get Telegram logger.
+ *
+ * @return TelegramLogger
+ */
+function telegram_logger() {
+  $telegram = &drupal_static('telegram');
+  if (!isset($telegram['logger'])) {
+    $telegram['logger'] = new TelegramLogger(_telegram_params());
+  }
+  return $telegram['logger'];
+}
+
+/**
+ * Get configuration as array.
+ */
+function _telegram_params() {
+  return array(
+    'command' => variable_get_value('telegram_command_exec'),
+    'keyfile' => variable_get_value('telegram_command_key'),
+    'homepath' => variable_get_value('telegram_command_cwd'),
+    'configfile' => variable_get_value('telegram_config_path'),
+    'log_level' => variable_get_value('telegram_command_debug') ? 0 : 1,
+    'log_file' => variable_get_value('telegram_log_file'),
+  );
 }

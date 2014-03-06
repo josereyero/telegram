@@ -1,0 +1,50 @@
+<?php
+/**
+ * @file
+ * Drupal module: Telegram manager
+ *
+ * Experimental development, guess what...
+ *
+ * By Jose Manuel Guerrero & Jose Reyero
+ *
+ * http://reyero.net
+ * http://jmanuelguerrero.com
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function telegram_client_menu() {
+   $items['admin/config/telegram/client'] = array(
+     'title' => 'Client',
+     'description' => 'Test Telegram features',
+     'page callback' => 'drupal_get_form',
+     'page arguments' => array('telegram_client_send_form'),
+     'access arguments' => array('administer site configuration'),
+     'file' => 'telegram_client.pages.inc',
+   );
+   $items['admin/config/telegram/client/send'] = array(
+     'title' => 'Send',
+     'description' => 'Try sending messages manually',
+     'type' => MENU_DEFAULT_LOCAL_TASK,
+   );
+   $items['admin/config/telegram/client/contacts'] = array(
+     'title' => 'Contacts',
+     'description' => 'View contact list',
+     'page callback' => 'drupal_get_form',
+     'page arguments' => array('telegram_client_contact_list_form'),
+     'access arguments' => array('administer site configuration'),
+     'file' => 'telegram_client.pages.inc',
+     'type' => MENU_LOCAL_TASK,
+   );
+   $items['admin/config/telegram/client/readmessages'] = array(
+     'title' => 'Read Messages',
+     'description' => 'Read Messages',
+     'page callback' => 'drupal_get_form',
+     'page arguments' => array('telegram_client_read_messages_form'),
+     'access arguments' => array('administer site configuration'),
+     'file' => 'telegram_client.pages.inc',
+     'type' => MENU_LOCAL_TASK,
+   );
+   return $items;
+}

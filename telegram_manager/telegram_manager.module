@@ -1,0 +1,31 @@
+<?php
+/**
+ * @file
+ * Drupal module: Telegram manager
+ *
+ * Experimental development, guess what...
+ *
+ * By Jose Manuel Guerrero & Jose Reyero
+ *
+ * http://reyero.net
+ * http://jmanuelguerrero.com
+ */
+
+use Drupal\telegram\DrupalTelegramStorage;
+use Drupal\telegram\DrupalTelegramManager;
+
+/**
+ * Get Telegram manager.
+ *
+ * @return DrupalTelegramManager
+ */
+function telegram_manager() {
+  $telegram = &drupal_static('telegram');
+  if (!isset($telegram['manager'])) {
+    $client = telegram_client();
+    $objects['manager'] = new DrupalTelegramManager($client, new DrupalTelegramStorage());
+  }
+  return $telegram['manager'];
+}
+
+

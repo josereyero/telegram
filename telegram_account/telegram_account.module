@@ -38,6 +38,7 @@ function telegram_account_access($account) {
  * Implements hook_user_load().
  */
 function telegram_account_user_load($users) {
+  return;
   $contacts = telegram_manager()->getStorage()->contactLoadMultiple(array('uid' => array_keys($users)));
   foreach ($contacts as $contact) {
     $users[$contact->uid]->telegram = $contact;

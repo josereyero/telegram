@@ -172,7 +172,6 @@ function telegram_schema() {
     'indexes' => array('peer' => array('peer'), 'id' => array('id')),
     'primary key' => array('oid'),
   );
-
   return $schema;
 }
 

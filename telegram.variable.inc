@@ -36,6 +36,11 @@ function telegram_variable_info($options) {
     'title' => t('Command cwd path', array(), $options),
     'default' => '/home/telegram',
   );
+  $variables['telegram_log_file'] = array(
+    'type' => 'string',
+    'title' => t('Optional log file', array(), $options),
+    'default' => '/tmp/drupal-telegram.log',
+  );
   $variables['telegram_command_debug'] = array(
     'type' => 'enable',
     'title' => t('Debug mode', array(), $options),

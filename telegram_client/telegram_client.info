@@ -1,0 +1,5 @@
+name = Telegram Client
+description = Web UI for Telegram Client, for testing...
+core = 7.x
+package = Telegram
+dependencies[] = telegram
