@@ -10,6 +10,9 @@ namespace Drupal\telegram;
 use \streamWrapper;
 use \Exception;
 
+/**
+ * Telegram Client
+ */
 class TelegramClient {
 
   /**
@@ -19,32 +22,29 @@ class TelegramClient {
    */
   protected $params;
 
-  // Running process
+  /**
+   * Process wrapper
+   *
+   * @var TelegramProcess
+   */
   protected $process;
 
-
-  protected $logs = array();
-
-  // Debug level
-  protected $logLevel = 0;
-  protected $logFile;
+  /**
+   * @var TelegramLogger
+   */
+  protected $logger;
 
   /**
    * Class constructor.
+   *
+   * @var TelegramProcess $process
+   *   Mixed params
+   * @var TelegramLogger $logger
+   *   Logging interface.
    */
-  public function __construct(array $params) {
-    // Add some defaults
-    $params += array('debug' => 0);
-    $this->params = $params;
-    $this->logLevel = $params['debug'] ? 0 : 1;
-    if (!empty($params['logfile'])) {
-      if ($file = fopen($params['logfile'], 'a')) {
-        $this->logFile = $file;
-      }
-      else {
-        $this->logError('Error opening log file', $params['logfile']);
-      }
-    }
+  public function __construct($process, $logger) {
+    $this->process = $process;
+    $this->logger = $logger;
   }
 
   /**
@@ -72,28 +72,24 @@ class TelegramClient {
    *   Contacts indexed by phone number.
    */
   function getContactList() {
-    if (!isset($this->contacts)) {
-		  if ($this->execCommand('contact_list')) {
-		    $pattern = array(
-		    0=>'/User\s\#(\d+)\:\s([\w\s]+)\s\((\w+)\s(\d+)\)\s(\offline)\.\s\w+\s\w+\s\[(\w+\/\w+\/\w+)\s(\w+\:\w+\:\w+)\]/u',
-		    1=>'/User\s\#(\d+)\:\s([\w\s]+)\s\((\w+)\s(\d+)\)\s(\online)/',
-		     );
+	  if ($this->execCommand('contact_list')) {
+	    $pattern = array(
+	    0=>'/User\s\#(\d+)\:\s([\w\s]+)\s\((\w+)\s(\d+)\)\s(\offline)\.\s\w+\s\w+\s\[(\w+\/\w+\/\w+)\s(\w+\:\w+\:\w+)\]/u',
+	    1=>'/User\s\#(\d+)\:\s([\w\s]+)\s\((\w+)\s(\d+)\)\s(\online)/',
+	     );
 
-		    $key = array(
-		    0 => 'string',
-		    1 => 'id',
-		    2 => 'name',
-		    3 => 'peer',
-		    4 => 'phone',
-		    5 => 'status',
-		    6 => 'date',
-		    7 => 'hour',);
-    	    $response = $this->parseResponse($pattern, $key, 'phone');
-    	    // @todo Parse response into a named array
-    	    $this->contacts = $response;
-		  }
-    }
-		return $this->contacts;
+	    $key = array(
+	    0 => 'string',
+	    1 => 'id',
+	    2 => 'name',
+	    3 => 'peer',
+	    4 => 'phone',
+	    5 => 'status',
+	    6 => 'date',
+	    7 => 'hour',);
+
+  	  return $this->parseResponse($pattern, $key, 'phone');
+	  }
   }
 
   /**
@@ -157,11 +153,11 @@ class TelegramClient {
   function getHistory($peer, $limit = NULL){
   	if ($this->execCommand('history', $peer .' '.$limit)) {
   	  $pattern = array(
-  	  0 => '/(\d+)\s\[(.*.)\]\s+(.*.)\s(«««|»»»|<<<|>>>)(.*)/u', 		 		
+  	  0 => '/(\d+)\s\[(.*.)\]\s+(.*.)\s(«««|»»»|<<<|>>>)(.*)/u',
   	  );
-  	  
+
   	  $key = array(
-  	  0 => 'string',		
+  	  0 => 'string',
   	  1 => 'idmsg',
   	  2 => 'date',
   	  3 => 'peer',
@@ -221,30 +217,32 @@ class TelegramClient {
   }
 
   /**
-   * Start process.
+   * Get process, make sure it it started.
+   *
+   * @return TelegramProcess
+   *   Started telegram process.
    */
   function getProcess() {
-    $this->start();
-    return $this->process;
+    if ($this->start()) {
+      return $this->process;
+    }
+  }
+
+  /**
+   * Get logger.
+   *
+   * @return TelegramLogger
+   */
+  function getLogger() {
+    return $this->logger;
   }
 
   /**
    * Start process.
    */
   function start() {
-    if (!isset($this->process)) {
-      $process = new TelegramProcess($this->params, $this);
-      if ($process->start()) {
-        // Process started OK
-        $this->process = $process;
-        $this->logInfo('Process started from client');
-      }
-      else {
-        // Process start failed, set to FALSE so we don't try to create it again.
-        $this->logError('Failed process start');
-        $this->process = FALSE;
-        throw new Exception('Telegram process failed to start');
-      }
+    if (isset($this->process)) {
+      return $this->process->start();
     }
   }
 
@@ -253,75 +251,47 @@ class TelegramClient {
    */
   function stop() {
     if (isset($this->process)) {
-      $this->logInfo('Client stopping process');
+      $this->log('Client stopping process');
       $this->process->close();
       unset($this->process);
     }
-    if (isset($this->logFile)) {
-      fclose($this->logFile);
-      unset($this->logFile);
-    }
   }
 
-
   /**
-   * Log line in output.
+   * Shorthand for debug message.
    */
-  function logInfo($message, $args = NULL) {
-    $this->log($message, $args, 1);
+  protected function debug($message, $args = NULL) {
+    $this->logger->logDebug($message, $args);
   }
 
   /**
-   * Log debug message.
-   */
-  function logDebug($message, $args = NULL) {
-    $this->log($message, $args, 0);
-  }
-
-
-  /**
-   * Log error message.
-   */
-  function logError($message, $args = NULL) {
-    $this->log($message, $args, 5);
-  }
-
-  /**
-   * Log debug message if in debug mode.
-   */
-  function debug($message, $args = NULL) {
-    $this->logDebug($message, $args);
-  }
-
-  /**
-   * Log message / mixed data.
+   * Shorthand for log message.
    *
    * @param mixed $message
    */
-  function log($message, $args, $severity) {
-    if ($severity >= $this->logLevel) {
-      $txt = is_string($message) ? $message : print_r($message, TRUE);
-      if ($args) {
-        $txt .= ': ';
-        $txt .= is_string($args) ? $args : print_r($args, TRUE);
-      }
-      $this->logs[] = $txt;
-      // Write to log file.
-      if (isset($this->logFile)) {
-        fwrite($this->logFile, $txt . "\n");
-      }
-      // Write to error log.
-      if ($severity >= 5) {
-        error_log($txt);
-      }
-    }
+  protected function log($message, $args = NULL) {
+    $this->logger->logInfo($message, $args);
   }
 
   /**
    * Get logged messages.
    */
   function getLogs() {
-    return isset($this->logs) ? $this->logs : array();
+    return $this->logger->formatLogs();
   }
 
+  /**
+   * Class destructor.
+   */
+  public function __destruct() {
+    $this->stop();
+    unset($this->logger);
+  }
+
+  /**
+   * Helper function. Convert contact name to peer name.
+   */
+  public static function nameToPeer($name) {
+    return str_replace(' ', '_', $name);
+  }
 }

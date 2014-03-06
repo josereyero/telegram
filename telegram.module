@@ -11,6 +11,8 @@
  * http://jmanuelguerrero.com
  */
 
+use Drupal\telegram\TelegramLogger;
+use Drupal\telegram\TelegramProcess;
 use Drupal\telegram\DrupalTelegramClient;
 use Drupal\telegram\DrupalTelegramStorage;
 use Drupal\telegram\DrupalTelegramManager;
@@ -110,21 +112,24 @@ function telegram_send_user($account, $text) {
  * @return DrupalTelegramManager
  */
 function telegram_manager() {
-  static $manager;
+  $objects = &drupal_static(__FUNCTION__);
 
-  if (!isset($manager)) {
-    $client = new DrupalTelegramClient(array(
+  if (!$objects) {
+    $params = array(
         'command' => variable_get_value('telegram_command_exec'),
         'keyfile' => variable_get_value('telegram_command_key'),
         'homepath' => variable_get_value('telegram_command_cwd'),
         'configfile' => variable_get_value('telegram_config_path'),
-        'debug' => variable_get_value('telegram_command_debug'),
-        'logfile' => '/tmp/drupal-telegram.log',
-    ));
-    $manager = new DrupalTelegramManager($client, new DrupalTelegramStorage());
+        'log_level' => variable_get_value('telegram_command_debug') ? 0 : 1,
+        'log_file' => '/tmp/drupal-telegram.log',
+    );
+    $objects['logger'] = new TelegramLogger($params);
+    $objects['process'] = new TelegramProcess($params, $objects['logger']);
+    $objects['client'] = new DrupalTelegramClient($objects['process'], $objects['logger']);
+    $objects['manager'] = new DrupalTelegramManager($objects['client'], new DrupalTelegramStorage());
   }
 
-  return $manager;
+  return $objects['manager'];
 }
 
 /**

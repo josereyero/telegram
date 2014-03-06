@@ -16,7 +16,6 @@ class TelegramProcess {
 
   // Running parameters.
   protected $params;
-  protected $commandLine;
 
   // Running process
   protected $process;
@@ -31,12 +30,18 @@ class TelegramProcess {
   protected $logs;
   protected $errors;
 
-  // Logging and debug
-  protected $debug;
+  /**
+   * @var TelegramLogger
+   */
   protected $logger;
 
   /**
    * Class constructor.
+   *
+   * @param array $params
+   *   Mixed process parameters.
+   * @param TelegramLogger $logger
+   *   Logging interface.
    */
   public function __construct(array $params, $logger) {
     // Add some defaults
@@ -44,19 +49,23 @@ class TelegramProcess {
       'command' => '/usr/local/bin/telegram',
       'keyfile' => '/etc/telegram/server.pub',
       'configfile' => '/etc/telegram/telegram.conf',
-      'debug' => 0,
       'homepath' => '/tmp/telegram',
       // Timeout for locking operations (read), in seconds.
       'timeout' => 10,
     );
     // Initialize variables.
     $this->params = $params;
-    $this->commandLine = $params['command'] .
-      ' -N' . // Print out message numbers
-      ' -c ' . $params['configfile'] .
-      ' -k ' . $params['keyfile'];
-    $this->debug = $params['debug'];
     $this->logger = $logger;
+  }
+
+  /**
+   * Get command line.
+   */
+  function getCommandLine() {
+    return $this->params['command'] .
+      ' -N' . // Print out message numbers
+      ' -c ' . $this->params['configfile'] .
+      ' -k ' . $this->params['keyfile'];
   }
 
   /**
@@ -294,7 +303,7 @@ class TelegramProcess {
          2 => array("pipe", "w+"),  // stderr
          //2 => array("file", '/tmp/telegram-error.txt', "a") // stderr is a file to write to
       );
-      $this->process = proc_open($this->commandLine, $descriptorspec, $this->pipes, $this->params['homepath']);
+      $this->process = proc_open($this->getCommandLine(), $descriptorspec, $this->pipes, $this->params['homepath']);
 
       if (is_resource($this->process)) {
         // Read first four lines that are credits and license messages.
@@ -366,18 +375,16 @@ class TelegramProcess {
   }
 
   /**
-   * Log debug message if in debug mode.
+   * Shorthand for debug messages.
    */
-  function debug($message, $args = NULL) {
+  protected function debug($message, $args = NULL) {
     $this->logger->logDebug($message, $args);
   }
 
   /**
-   * Log message / mixed data.
-   *
-   * @param mixed $message
+   * Shorthand for log messages.
    */
-  function log($message, $args = NULL) {
+  protected function log($message, $args = NULL) {
     $this->logger->logInfo($message, $args);
   }
 
@@ -393,10 +400,12 @@ class TelegramProcess {
   }
 
   /**
-   * Get logged messages.
+   * Get printable logged messages.
+   *
+   * @return string
    */
   function getLogs() {
-    return $this->logger->getLogs();
+    return $this->logger->formatLogs();
   }
 
   /**

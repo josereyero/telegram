@@ -23,15 +23,6 @@ class DrupalTelegramClient extends TelegramClient {
   protected $outbox;
 
   /**
-   * Create and populate with test data.
-   *
-   * @todo Remove
-   */
-  public function __construct(array $params) {
-    parent::__construct($params);
-  }
-
-  /**
    * Get peer name with phone number.
    *
    * @return Drupal/telegram/TelegramContact
@@ -92,17 +83,6 @@ class DrupalTelegramClient extends TelegramClient {
     }
   }
 
-  /**
-   * Helper function.
-   */
-  public static function nameToPeer($name) {
-    return str_replace(' ', '_', $name);
-  }
 
-  /**
-   * Magic destruct. No need for explicit closing.
-   */
-  public function __destruct() {
-    $this->stop();
-  }
+
 }

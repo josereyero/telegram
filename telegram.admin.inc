@@ -83,7 +83,7 @@ function telegram_read_messages_form($form, &$form_state) {
     '#type' => 'item',
     '#markup' => telegram_read_messages($user),
   );
-  
+
   $form['readmessages'] = array('#type' => 'submit', '#value' => t('Read'));
 
   return $form;
@@ -139,14 +139,15 @@ function telegram_contact_list_form_submit($form, &$form_state) {
  * Test form.
  */
 function telegram_test_form($form, &$form_state) {
+  // If run for the first time, just start / stop process.
   if (isset($form_state['output'])) {
-    $form['output'] = array(
-      '#type' => 'fieldset',
-      '#value' => 'output',
-    ) + $form_state['output'];
+    $form['output'] = $form_state['output'];
   }
 
-  $form['send'] = array('#type' => 'submit', '#value' => t('Check'));
+  $form += _telegram_test_logs();
+
+  $form['dialogs'] = array('#type' => 'submit', '#value' => t('Dialog list'));
+  $form['contacts'] = array('#type' => 'submit', '#value' => t('Contact list'));
 
   return $form;
 }
@@ -155,14 +156,28 @@ function telegram_test_form($form, &$form_state) {
  * Test form submit.
  */
 function telegram_test_form_submit($form, &$form_state) {
-  $client = telegram_client();
+  if ($client = _telegram_test_client()) {
+    switch ($form_state['values']['op']) {
+      case t('Dialog list'):
+        $data = $client->getDialogList();
+        break;
+      case t('Contact list'):
+        $data = $client->getContactList();
+        break;
+    }
+    $output = array(
+      '#type' => 'fieldset',
+      '#title' => $form_state['values']['op'],
+    );
+    $output['output']['content'] = array(
+      '#type' => 'markup',
+      '#markup' => '<pre>' . check_plain(print_r($data, TRUE)) . '</pre>',
+    );
+    $form_state['output'] = $output;
+    $form_state['rebuild'] = TRUE;
+    $client->stop();
+  }
 
-  $output['dialogs'] = $client->getDialogList();
-  $output['contacts'] = $client->getContactList();
-
-  // Add debug output.
-  _telegram_debug_form($form, $form_state, $output);
-  $form_state['rebuild'] = TRUE;
 }
 
 /**
@@ -199,6 +214,7 @@ function telegram_read_messages($user) {
   }
   return theme('table', array('header' => $header, 'rows' => $rows));
 }
+
 /**
  * Add debug output to form state.
  */
@@ -206,15 +222,101 @@ function _telegram_debug_form($form, &$form_state, $output= array()) {
   $client = telegram_client();
 
   // Complete with other data.
-  $output['errors'] = $client->getProcess()->getErrors();
-  $output['logs'] = $client->getProcess()->getLogs();
+  if ($process = $client->getProcess()) {
+    $output['errors'] = $process->getErrors();
+  }
+  else {
+    drupal_set_message('Telegram process cannot be started.', 'error');
+  }
+  $output['logs'] = $client->getLogs();
 
   foreach ($output as $title => $value) {
-    $markup = is_string($value) ? check_plain($value) : check_plain(print_r($value, TRUE));
+
     $form_state['output'][$title] = array(
       '#type' => 'item',
       '#title' => $title,
       '#markup' => '<pre>' . $markup . '</pre>',
     );
   }
+}
+
+/**
+ * Print logs
+ */
+function _telegram_debug_logs() {
+  $element = array();
+  if ($logs = _telegram_test_logs()) {
+
+  }
+  return $element;
+}
+
+/**
+ * Build debug output for display in form.
+ */
+function _telegram_debug_build($output) {
+  $form = array();
+  if (isset($output['errors'])) {
+    $form['errors'] = _telegram_debug_element(t('Errors'), $output['errors']);
+  }
+  if (isset($output['logs'])) {
+    $form['logs'] = _telegram_debug_element(t('Logs'), $output['logs'], TRUE);
+  }
+  return $form;
+}
+
+/**
+ * Build fieldset with debug data.
+ */
+function _telegram_debug_element($title, $value, $collapsed = FALSE) {
+  $element = array (
+    '#title' => $title,
+    '#type' => 'fieldset',
+    '#collapsible' => TRUE,
+    '#collapsed' => $collapsed,
+  );
+  $markup = is_string($value) ? check_plain($value) : check_plain(print_r($value, TRUE));
+  $element['value'] = array(
+    '#type' => $markup,
+    '#markup' => $markup,
+  );
+  return $element;
+}
+
+/**
+ * Get telegram client with some messages.
+ */
+function _telegram_test_client() {
+  static $client;
+  if (!isset($client)) {
+    $client = telegram_client();
+    if ($client->start()) {
+      drupal_set_message(t('Telegram client started successfully'));
+    }
+    else {
+      drupal_set_message(t('Cannot start Telegram client'), 'error');
+      $client = FALSE;
+    }
+  }
+  return $client;
+}
+
+/**
+ * Build element with telegram logs
+ */
+function _telegram_test_logs($string = NULL) {
+  $element = array();
+  if ($objects = drupal_static('telegram_manager')) {
+    $logs = $objects['logger']->formatLogs();
+    $element['logs'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Log messages'),
+      '#collapsible' => TRUE, '#collapsed' => TRUE,
+    );
+    $element['logs']['content'] = array(
+      '#type' => 'markup',
+      '#markup' => '<pre>'. check_plain($logs) . '</pre>',
+    );
+  }
+  return $element;
 }
