@@ -393,8 +393,7 @@ class TelegramProcess {
    *
    * @param int $miliseconds
    */
-
-  function wait($miliseconds = 10) {
+  function wait($miliseconds = 100) {
     $this->log('Sleep miliseconds', $miliseconds);
     usleep(1000 * $miliseconds);
   }

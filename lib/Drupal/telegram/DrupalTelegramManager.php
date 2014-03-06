@@ -204,13 +204,44 @@ class DrupalTelegramManager {
   }
 
   /**
+   * Get message list.
+   */
+  function getMessageList($conditions = array()) {
+    return $this->getStorage()->messageLoadMultiple($conditions);
+  }
+
+  /**
+   * Get new messages.
+   *
+   * @todo When getting user history, the newest messages may not be the incoming ones.
+   */
+  protected function getNewMessages($limit = 0) {
+    $dialog_list = $this->getClient()->getDialogList();
+    $count = 0;
+    $messages = array();
+    while ((!$limit || $count < $limit) && $dialog = array_shift($dialog_list)) {
+      if ($dialog->messages && $dialog->state == 'unread') {
+        $peer = $this->nameToPeer($dialog->user);
+        if ($more = $this->getClient()->getHistory($peer, $dialog->messages)) {
+          $messages = array_merge($messages, $more);
+          $count += count($more);
+        }
+      }
+    }
+    return $messages;
+  }
+
+  /**
    * Read new messages.
    *
    * @todo Get proper objects from TelegramClient.
    */
   function readNewMessages() {
-    $list = $this->getClient()->getNewMessages();
+    $list = $this->getNewMessages();
     foreach ($list as $index => $message) {
+      // @todo Field names.
+      $message->id = $message->idmsg;
+      $message->text = $message->msg;
       $message = new TelegramMessage($message);
       $message->type = 'incoming';
       $this->getStorage()->messageSave($message);

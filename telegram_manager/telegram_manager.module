@@ -15,6 +15,44 @@ use Drupal\telegram\DrupalTelegramStorage;
 use Drupal\telegram\DrupalTelegramManager;
 
 /**
+ * Implements hook_menu().
+ */
+function telegram_manager_menu() {
+   $items['admin/config/telegram/manager'] = array(
+     'title' => 'Messages',
+     'description' => 'Read Messages',
+     'page callback' => 'telegram_manager_message_list_page',
+     'access arguments' => array('administer site configuration'),
+     'file' => 'telegram_manager.pages.inc',
+   );
+   $items['admin/config/telegram/manager/message'] = array(
+     'title' => 'Messages',
+     'description' => 'Read all messages',
+     'type' => MENU_DEFAULT_LOCAL_TASK,
+     'weight' => -10,
+   );
+   $items['admin/config/telegram/manager/send'] = array(
+     'title' => 'Send',
+     'description' => 'Send message',
+     'page callback' => 'drupal_get_form',
+     'page arguments' => array('telegram_manager_send_form'),
+     'access arguments' => array('administer site configuration'),
+     'file' => 'telegram_manager.pages.inc',
+     'type' => MENU_LOCAL_TASK
+   );
+   $items['admin/config/telegram/manager/contact'] = array(
+     'title' => 'Contacts',
+     'description' => 'View contact list',
+     'page callback' => 'telegram_manager_contact_list_page',
+     'access arguments' => array('administer site configuration'),
+     'file' => 'telegram_manager.pages.inc',
+     'type' => MENU_LOCAL_TASK,
+   );
+
+   return $items;
+}
+
+/**
  * Get Telegram manager.
  *
  * @return DrupalTelegramManager
@@ -23,7 +61,7 @@ function telegram_manager() {
   $telegram = &drupal_static('telegram');
   if (!isset($telegram['manager'])) {
     $client = telegram_client();
-    $objects['manager'] = new DrupalTelegramManager($client, new DrupalTelegramStorage());
+    $telegram['manager'] = new DrupalTelegramManager($client, new DrupalTelegramStorage());
   }
   return $telegram['manager'];
 }

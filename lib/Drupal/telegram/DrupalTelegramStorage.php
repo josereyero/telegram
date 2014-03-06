@@ -57,7 +57,7 @@ class DrupalTelegramStorage {
   /**
    * Load multiple messages
    */
-  function messageLoadMultiple($conditions) {
+  function messageLoadMultiple($conditions, $index = 'oid') {
     return $this->loadMultiple('telegram_message', $conditions, $index, '\Drupal\telegram\TelegramMessage');
   }
 
