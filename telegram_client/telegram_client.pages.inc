@@ -69,7 +69,7 @@ function telegram_client_contact_list_form($form, &$form_state) {
   $form['contacts'] = array(
     '#title' => t('Contacts'),
     '#type' => 'item',
-    '#markup' => telegram_contact_list(),
+    '#markup' => telegram_client_contact_list(),
   );
 
   $form['send'] = array('#type' => 'submit', '#value' => t('Refresh'));
@@ -112,7 +112,7 @@ function telegram_client_read_messages_form($form, &$form_state) {
   $form['contacts'] = array(
     '#title' => t('Messages'),
     '#type' => 'item',
-    '#markup' => telegram_read_messages($user),
+    '#markup' => telegram_client_read_messages($user),
   );
 
   $form['readmessages'] = array('#type' => 'submit', '#value' => t('Read'));

@@ -101,7 +101,7 @@ function telegram_client() {
   $telegram = &drupal_static('telegram');
   if (!isset($telegram['client'])) {
     $logger = telegram_logger();
-    $process = TelegramProcess(_telegram_params(), $logger);
+    $process = new TelegramProcess(_telegram_params(), $logger);
     $telegram['client'] =  new DrupalTelegramClient($process, $logger);
   }
   return $telegram['client'];
