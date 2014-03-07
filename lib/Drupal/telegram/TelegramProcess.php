@@ -29,6 +29,7 @@ class TelegramProcess {
   protected $input;
   protected $logs;
   protected $errors;
+  protected $timeout;
 
   /**
    * @var TelegramLogger
@@ -115,8 +116,9 @@ class TelegramProcess {
    */
   function getResponse() {
     // $this->output = NULL;
-    while (!$this->output) {
-      $response = $this->readUntil('>');
+    $timeout = $this->setTimeout();
+    while (!$this->output && $this->checkTimeout(__FUNCTION__)) {
+      $response = $this->readUntil('>', $timeout);
       $this->output = $response;
     }
     return $this->output;
@@ -205,17 +207,13 @@ class TelegramProcess {
    *   Whether to wait until it is available.
    */
   function readLine($wait = FALSE, $timeout = NULL) {
-    $timeout = $timeout ? $timeout : time() + $this->params['timeout'];
+    $timeout = $this->setTimeout($timeout);
 
     $string = fgets($this->pipes[1]);
 
-    while ($wait && $string === FALSE) {
+    while ($wait && $string === FALSE && $this->checkTimeout(__FUNCTION__)) {
       $string = fgets($this->pipes[1]);
       $this->wait();
-      if (time() > $timeout) {
-        $this->log('Timeout readLine');
-        break;
-      }
     }
 
     if ($string !== FALSE) {
@@ -233,18 +231,14 @@ class TelegramProcess {
    *   Array of (trimmed) string lines before the stop char.
    */
   function readUntil($stop = '>', $timeout = NULL) {
-    $timeout = $timeout ? $timeout : time() + $this->params['timeout'];
+    $timeout = $this->setTimeout($timeout);
     $this->debug("readUntil $stop");
     $stop = trim($stop);
     $lines = array();
     $string = '';
-    while ($string !== $stop) {
+    while ($string !== $stop && $this->checkTimeout(__FUNCTION__)) {
       if ($string) {
         $lines[] = $string;
-      }
-      if (time() > $timeout) {
-        $this->log('Timeout readUntil');
-        break;
       }
       $string = $this->readLine(TRUE, $timeout);
     }
@@ -396,6 +390,36 @@ class TelegramProcess {
   function wait($miliseconds = 100) {
     $this->log('Sleep miliseconds', $miliseconds);
     usleep(1000 * $miliseconds);
+  }
+
+  /**
+   * Check for timeout.
+   *
+   * @param $function
+   *   Function name for logging.
+   * @return boolean
+   *   True if time < timeout.
+   */
+  protected function checkTimeout($function) {
+    if (time() < $this->timeout) {
+      return TRUE;
+    }
+    else {
+      $this->log('Timeout ' . $function);
+      return FALSE;
+    }
+  }
+
+  /**
+   * Set timeout for command.
+   *
+   * @param $time
+   *   Set new timeout if empty.
+   * @return int
+   *   Timestamp for timeout
+   */
+  function setTimeout($time = NULL) {
+    return $this->timeout = $time ? $time : time() + $this->params['timeout'];
   }
 
   /**
