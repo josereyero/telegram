@@ -10,7 +10,9 @@ namespace Drupal\telegram;
 /**
  * Drupal Telegram Client
  *
- * Runs commands through the client and parses responses.
+ * This is a wrapper around TelegramClient using some Drupal specific features.
+ *
+ * It uses a locking mechanism to prevent starting more than one process.
  */
 class DrupalTelegramClient extends TelegramClient {
 
@@ -21,6 +23,11 @@ class DrupalTelegramClient extends TelegramClient {
    */
   protected $inbox;
   protected $outbox;
+
+  /**
+   * Control start and lock status.
+   */
+  protected $lock;
 
   /**
    * Get peer name with phone number.
@@ -83,6 +90,30 @@ class DrupalTelegramClient extends TelegramClient {
     }
   }
 
+  /**
+   * Overrides TelegramClient::start()
+   */
+  function start() {
+    if (!isset($this->lock)) {
+      if (lock_acquire('telegram_client', 10.0)) {
+        $this->lock = TRUE;
+      }
+      else {
+        $this->logger->logError('Failed to acquire Drupal lock on the process');
+        return FALSE;
+      }
+    }
+    return parent::start();
+  }
 
-
+  /**
+   * Overrides TelegramClient::stop()
+   */
+  function stop() {
+    if (isset($this->lock)) {
+      lock_release('telegram_client');
+      unset($this->lock);
+    }
+    return parent::stop();
+  }
 }

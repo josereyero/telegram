@@ -40,10 +40,9 @@ function telegram_test_form_submit($form, &$form_state) {
       '#markup' => '<pre>' . check_plain(print_r($data, TRUE)) . '</pre>',
     );
     $form_state['output'] = $output;
-    $form_state['rebuild'] = TRUE;
     $client->stop();
   }
-
+  $form_state['rebuild'] = TRUE;
 }
 
 /**
