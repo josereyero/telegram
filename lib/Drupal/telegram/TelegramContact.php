@@ -26,7 +26,7 @@ class TelegramContact extends TelegramData {
    *
    * @var string
    */
-  public $source;
+  public $source = 'telegram';
   public $uid = 0;
   public $verification;
   public $verified = 0;
@@ -43,7 +43,15 @@ class TelegramContact extends TelegramData {
    * Get peer name.
    */
   public function getPeer() {
-    return $this->peer;
+    if (!empty($this->peer)) {
+      return $this->peer;
+    }
+    elseif (!empty($this->name)) {
+      return $this->nameToPeer($this->name);
+    }
+    else {
+      return FALSE;
+    }
   }
 
   /**
@@ -57,9 +65,10 @@ class TelegramContact extends TelegramData {
   }
 
   /**
-   * Get table name().
+   * Helper function. Convert contact name to peer name.
    */
-  static function getDbTable() {
-    return 'telegram_contact';
+  public static function nameToPeer($name) {
+    return str_replace(' ', '_', $name);
   }
+
 }

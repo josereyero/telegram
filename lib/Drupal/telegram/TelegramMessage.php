@@ -10,9 +10,7 @@
 namespace Drupal\telegram;
 
 /**
- * Incoming / out going messages.
- * @author jose
- *
+ * Incoming / outgoing messages.
  */
 class TelegramMessage extends TelegramData {
 
@@ -65,14 +63,13 @@ class TelegramMessage extends TelegramData {
    */
   public function setDestination($contact) {
     $this->type = 'outgoing';
-    return $this;
+    return $this->setContact($contact);
   }
 
   /**
    * Set contact data to message.
    */
   public function setContact($contact) {
-    $this->contact = $contact;
     foreach (array('phone', 'peer', 'uid') as $field) {
       if (isset($contact->$field)) {
         $this->$field = $contact->$field;

@@ -17,6 +17,7 @@ abstract class TelegramData {
    * @var int
    */
   public $oid = NULL;
+
   /**
    * Timestamps
    *
@@ -24,6 +25,11 @@ abstract class TelegramData {
    */
   public $created;
   public $updated;
+
+  /**
+   * The string this was parsed from.
+   */
+  public $string;
 
   /**
    * Construct from array.
