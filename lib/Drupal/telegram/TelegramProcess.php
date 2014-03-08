@@ -109,17 +109,13 @@ class TelegramProcess {
    * @param string $arg1, $arg2...
    *   Optional, variable number of arguments for the command.
    */
-  public function execCommand() {
-    $args = func_get_args();
-    $command = array_shift($args);
+  public function execCommand($command, $args = NULL) {
     // Build and sanitize parameters
     if ($args) {
-      // Filter out NULL values in arguments
-      $args = array_filter($args, function($x) {return isset($x);});
       $params = implode(' ', $args);
       // @todo Better sanitize params.
       $params = str_replace("\n", ' ', $params);
-      $command = trim($command . ' ' . $params);
+      $command .= ' ' . trim($params);
     }
     // Flush output, there may be responses to previous commands.
     $this->flush();
@@ -380,8 +376,9 @@ class TelegramProcess {
         else {
           // Read first four lines that are credits and license messages.
           $this->readUntil('>');
-          // The first dialog list should stay there just in case the client
-          // wants to read it.
+          // Should the first dialog list should stay there
+          // just in case the client wants to read it.
+          $this->readUntil('>');
         }
       }
 

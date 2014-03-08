@@ -48,19 +48,10 @@ class TelegramClient {
   }
 
   /**
-   * Send message to phone number.
-   */
-  public function sendPhone($phone, $message) {
-    $contacts = $this->getContactList();
-    // @todo find peer name by contact.
-    return $this->msg($peer, $message);
-  }
-
-  /**
    * Send message to peer.
    */
   public function sendMessage($peer, $message) {
-    $output = $this->execCommand('msg', $peer . ' ' . $message);
+    $output = $this->execCommand('msg', $peer, $message);
     // @todo Parse output and get success / failure.
     return TRUE;
   }
@@ -71,59 +62,63 @@ class TelegramClient {
    * @return array
    *   Contacts indexed by phone number.
    */
-  function getContactList() {
+  public function getContactList() {
 	  if ($this->execCommand('contact_list')) {
 	    $pattern = array(
-	    0=>'/User\s\#(\d+)\:\s([\w\s]+)\s\((\w+)\s(\d+)\)\s(\offline)\.\s\w+\s\w+\s\[(\w+\/\w+\/\w+)\s(\w+\:\w+\:\w+)\]/u',
-	    1=>'/User\s\#(\d+)\:\s([\w\s]+)\s\((\w+)\s(\d+)\)\s(\online)/',
-	     );
+	      0 => '/User\s\#(\d+)\:\s([\w\s]+)\s\((\w+)\s(\d+)\)\s(\offline)\.\s\w+\s\w+\s\[(\w+\/\w+\/\w+)\s(\w+\:\w+\:\w+)\]/u',
+	      1 => '/User\s\#(\d+)\:\s([\w\s]+)\s\((\w+)\s(\d+)\)\s(\online)/',
+	    );
 
-	    $key = array(
-	    0 => 'string',
-	    1 => 'id',
-	    2 => 'name',
-	    3 => 'peer',
-	    4 => 'phone',
-	    5 => 'status',
-	    6 => 'date',
-	    7 => 'hour',);
+	    $mapping = array(
+  	    0 => 'string',
+  	    1 => 'id',
+  	    2 => 'name',
+  	    3 => 'peer',
+  	    4 => 'phone',
+  	    5 => 'status',
+  	    6 => 'date',
+  	    7 => 'hour',
+	    );
 
-  	  return $this->parseResponse($pattern, $key, 'phone');
+  	  return $this->parseResponse($pattern, $mapping, 'phone');
 	  }
   }
 
   /**
    * Get list of current dialogs.
+   *
+   * @todo Remove filters, just get dialog list
    * @params filter 1 for all, 2 for read, 3 for unread
    */
-  function getDialogList($filter = 1) {
+  public function getDialogList($filter = 1) {
     if ($this->execCommand('dialog_list')) {
       // @todo Add the right regexp format for the response.
 
       if ($filter == 1)
         {
           $pattern = array(
-          0=> '/^User\s([\w\s]+)\:\s(\d+)\s(\w+)$/u',
+            0=> '/^User\s([\w\s]+)\:\s(\d+)\s(\w+)$/u',
           );
         }
       if ($filter == 2)
       {
       	 $pattern = array(
-      	 0 => '/^User\s([\w\s]+)\:\s(0)\s(\w+)$/u',
+      	   0 => '/^User\s([\w\s]+)\:\s(0)\s(\w+)$/u',
       	 );
       }
       if ($filter == 3)
       {
       	$pattern = array(
-      	0 => '/^User\s([\w\s]+)\:\s(1)\s(\w+)$/u',
+      	  0 => '/^User\s([\w\s]+)\:\s(1)\s(\w+)$/u',
       	);
       }
-      $key = array(
-      0 => 'string',
-       1 => 'user',
-       2 => 'messages',
-       3 => 'state');
-      return $this->parseResponse($pattern, $key);
+      $mapping = array(
+        0 => 'string',
+        1 => 'user',
+        2 => 'messages',
+        3 => 'state'
+      );
+      return $this->parseResponse($pattern, $mapping);
     }
   }
 
@@ -131,9 +126,16 @@ class TelegramClient {
    * Add contact
    *
    * Add contact can change a name contact
+   *
+   * @param string $phone
+   *   Phone number, with country code but without '+' nor '00'
+   * @param string $first_name
+   *   Contact's first name, a single word.
+   * @param string $first_name
+   *   Contact's last name, a single word.
    */
-  function addContact($phone, $first_name, $last_name) {
-  	$output = $this->execCommand('add_contact', $phone . ' ' .  $first_name . ' ' . $last_name);
+  public function addContact($phone, $first_name, $last_name) {
+  	$output = $this->execCommand('add_contact', $phone, $first_name,  $last_name);
   	 // @TODO test the exit of the command
   	return TRUE;
   }
@@ -141,54 +143,64 @@ class TelegramClient {
   /**
    * Rename contact
    */
-  function renameContact($peer, $first_name, $last_name){
-  	$output = $this->execCommand('rename_contact', $peer . ' ' . $fname . ' '. $sname);
+  public function renameContact($peer, $first_name, $last_name){
+  	$output = $this->execCommand('rename_contact', $peer, $first_name,  $last_name);
   	return TRUE;
   }
 
  /**
-  * Get history's peer
-  * @param $limit limit the results
+  * Get peer's history
+  *
+  * @param string $peer
+  *   Peer name or contact name with spaces replaced by '_'
+  * @param int $limit
+  *   Maximum number of messages, defaults to 40
+  *
+  * @return array
+  *   Array of message objects
   */
-  function getHistory($peer, $limit = NULL){
-  	if ($this->execCommand('history', $peer .' '.$limit)) {
+  public function getHistory($peer, $limit = 40){
+  	if ($this->execCommand('history', $peer, $limit)) {
   	  $pattern = array(
-  	  0 => '/(\d+)\s\[(.*.)\]\s+(.*.)\s(«««|»»»|<<<|>>>)(.*)/u',
+  	    0 => '/(\d+)\s\[(.*.)\]\s+(.*.)\s(«««|»»»|<<<|>>>)(.*)/u',
   	  );
 
-  	  $key = array(
-  	  0 => 'string',
-  	  1 => 'idmsg',
-  	  2 => 'date',
-  	  3 => 'peer',
-  	  4 => 'direction',
-  	  5 => 'msg',);
-  	  return $this->parseResponse($pattern,$key);
+  	  $mapping = array(
+  	    0 => 'string',
+    	  1 => 'idmsg',
+    	  2 => 'date',
+    	  3 => 'peer',
+    	  4 => 'direction',
+    	  5 => 'msg',
+  	  );
+  	  return $this->parseResponse($pattern, $mapping);
   	}
   }
 
   /**
    * Mark as read messages of a peer
+   *
+   * @param string $peer
+   *   Peer name or contact name with spaces replaced by '_'
    */
-  function markAsRead($peer){
-  	$output = $this->execCommand('mark_read', $peer );
+  public function markAsRead($peer){
+  	$output = $this->execCommand('mark_read', $peer);
   	return TRUE;
   }
 
   /**
    * Low level exec function.
    *
-   * @param $command
-   *   Command key
-   * @param $args
-   *   Command arguments.
-   * @param $parse_response
-   *   Optional regex to parse the response.
-   *   None if we don't need a response.
+   * @param string $command
+   *   Telegram CLI command to execute.
+   * @param string $arg1, $arg2...
+   *   Optional, variable number of arguments for the command.
    */
-  protected function execCommand($command, $args = NULL) {
+  protected function execCommand() {
     // Make sure process is started.
     if ($process = $this->getProcess()) {
+      $args = func_get_args();
+      $command = array_shift($args);
       return $process->execCommand($command, $args);
     }
   }
@@ -201,15 +213,18 @@ class TelegramClient {
    * @param array mapping
    *   Field mapping.
    * @param string index_field
+   *   Field to use for indexing the resulting array.
+   * @param string $class
+   *   Class name to fetch the objects into.
    *
    * @return array
    *   Response array with objects indexed by index_field.
    */
-  protected function parseResponse($pattern = NULL, $mapping = array(), $index_field = NULL) {
+  protected function parseResponse($pattern = NULL, $mapping = array(), $index_field = NULL, $class = NULL) {
     $response = array();
     if (($process = $this->getProcess()) && ($list = $process->parseResponse($pattern, $mapping))) {
       foreach ($list as $key => $data) {
-        $index = $index_field ? $data[$index_field] : $key;
+        $index = $index_field && isset($data[$index_field]) ? $data[$index_field] : $key;
         $response[$index] = (object)$data;
       }
     }
@@ -239,8 +254,11 @@ class TelegramClient {
 
   /**
    * Start process.
+   *
+   * @return boolean
+   *   TRUE if process started successfully.
    */
-  function start() {
+  public function start() {
     if (isset($this->process)) {
       return $this->process->start();
     }
@@ -249,7 +267,7 @@ class TelegramClient {
   /**
    * Exit process (send quit command).
    */
-  function stop() {
+  public function stop() {
     if (isset($this->process)) {
       $this->log('Client stopping process');
       $this->process->stop();
