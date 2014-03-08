@@ -94,23 +94,31 @@ class DrupalTelegramClient extends TelegramClient {
    * Overrides TelegramClient::start()
    */
   function start() {
+    // Try to acquire lock on the process.
+    // If not available, wait for 10 secs and retry.
     if (!isset($this->lock)) {
-      if (lock_acquire('telegram_client', 10.0)) {
+      if (lock_acquire('telegram_client', 15.0)) {
         $this->lock = TRUE;
       }
       else {
-        $this->logger->logError('Failed to acquire Drupal lock on the process');
-        return FALSE;
+        $this->logger->logInfo('Drupal. Waiting for lock to be available (15 seconds)');
+        $this->lock = lock_wait('telegram_client', 15);
       }
     }
-    return parent::start();
+    if ($this->lock) {
+      return parent::start();
+    }
+    else {
+      $this->logger->logError('Drupal. Failed to acquire lock on the process');
+      return FALSE;
+    }
   }
 
   /**
    * Overrides TelegramClient::stop()
    */
   function stop() {
-    if (isset($this->lock)) {
+    if (!empty($this->lock)) {
       lock_release('telegram_client');
       unset($this->lock);
     }
