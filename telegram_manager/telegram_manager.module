@@ -19,7 +19,7 @@ use Drupal\telegram\DrupalTelegramManager;
  */
 function telegram_manager_menu() {
    $items['admin/config/telegram/manager'] = array(
-     'title' => 'Messages',
+     'title' => 'Manager',
      'description' => 'Read Messages',
      'page callback' => 'telegram_manager_message_list_page',
      'access arguments' => array('administer site configuration'),

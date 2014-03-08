@@ -67,6 +67,15 @@ class DrupalTelegramManager {
   }
 
   /**
+   * Get contact by name / peer.
+   */
+  function getContactByName($name) {
+    $peer = TelegramContact::nameToPeer($name);
+    $contacts = $this->getStorage()->contactLoadMultiple(array('peer' => $peer));
+    return reset($contacts);
+  }
+
+  /**
    * Create contact from user account.
    *
    * @todo Create better names from user accounts.
@@ -152,9 +161,25 @@ class DrupalTelegramManager {
    *
    * @param DrupalTelegramMessage $message
    */
-  function sendMessage($message) {
-    $message->type = 'outgoing';
-    $result = $this->getClient()->sendMessage($message->peer, $message->text);
+  function sendMessage($peer, $text) {
+    if ($contact = $this->getContactByName($peer)) {
+      return $this->sendToContact($contact, $text);
+    }
+    else {
+      return FALSE;
+    }
+  }
+
+  /**
+   * Send message to contact.
+   */
+  function sendToContact($contact, $text) {
+    $result = $this->getClient()->sendMessage($contact->peer, $text);
+    $message = new TelegramMessage(array(
+      'text' => $text,
+      'type' => 'outgoing',
+    ));
+    $message->setDestination($contact);
     if ($result) {
       $message->sent = REQUEST_TIME;
       $message->status = $message::STATUS_DONE;
@@ -163,7 +188,9 @@ class DrupalTelegramManager {
       $message->status = $message::STATUS_ERROR;
     }
     $this->getStorage()->messageSave($message);
+    return $message;
   }
+
 
   /**
    * Get contact list.
@@ -221,7 +248,7 @@ class DrupalTelegramManager {
     $messages = array();
     while ((!$limit || $count < $limit) && $dialog = array_shift($dialog_list)) {
       if ($dialog->messages && $dialog->state == 'unread') {
-        $peer = $this->nameToPeer($dialog->user);
+        $peer = TelegramContact::nameToPeer($dialog->user);
         if ($more = $this->getClient()->getHistory($peer, $dialog->messages)) {
           $messages = array_merge($messages, $more);
           $count += count($more);
@@ -239,9 +266,6 @@ class DrupalTelegramManager {
   function readNewMessages() {
     $list = $this->getNewMessages();
     foreach ($list as $index => $message) {
-      // @todo Field names.
-      $message->id = $message->idmsg;
-      $message->text = $message->msg;
       $message = new TelegramMessage($message);
       $message->type = 'incoming';
       $this->getStorage()->messageSave($message);

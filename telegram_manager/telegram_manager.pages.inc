@@ -42,11 +42,20 @@ function telegram_manager_send_form_submit($form, &$form_state) {
   if ($to && $text) {
     drupal_set_message(t('Sending'));
     if (is_numeric($to)) {
-      $result = $client->sendToPhone($to, $text);
+      if ($contact = $telegram->getContactByPhone($to)) {
+        $result = $telegram->sendToContact($contact, $text);
+      }
+      else {
+        drupal_set_message('Contact not found', 'error');
+      }
     }
     else {
-      $peer = str_replace(' ', '_', $to);
-      $result = $client->sendToPeer($peer, $text);
+      if ($contact = $telegram->getContactByName($to)) {
+        $result = $telegram->sendToContact($contact, $text);
+      }
+      else {
+        drupal_set_message('Contact not found', 'error');
+      }
     }
     if ($result) {
       drupal_set_message(t('Your message has been queued for delivery.'));

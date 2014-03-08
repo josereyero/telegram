@@ -142,7 +142,6 @@ class TelegramProcess {
       unset($this->lastCommand);
     }
 
-
     while (!$this->output && $this->checkTimeout(__FUNCTION__)) {
       $response = $this->readUntil('>', $timeout);
       $this->debug('getResponse', $response);
