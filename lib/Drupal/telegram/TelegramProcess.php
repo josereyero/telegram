@@ -24,12 +24,15 @@ class TelegramProcess {
   protected $pipes;
 
   // Input / Output history.
-  protected $lastCommand;
   protected $output;
   protected $input;
   protected $logs;
   protected $errors;
   protected $timeout;
+
+  // Helper variables for stream processing
+  protected $lastCommand;
+  protected $readBuffer;
 
   /**
    * @var TelegramLogger
@@ -102,9 +105,8 @@ class TelegramProcess {
     // Save last command executed.
     $this->lastCommand = $command;
     // Write command to the process input.
+    $this->debug('execCommand', "[$command]");
     $this->write($command . "\n");
-    // Read until prompt
-    $response = $this->readUntil('>');
     // Get command response.
     return $this->getResponse();
   }
@@ -117,8 +119,15 @@ class TelegramProcess {
   function getResponse() {
     // $this->output = NULL;
     $timeout = $this->setTimeout();
+    $command = $this->lastCommand;
     while (!$this->output && $this->checkTimeout(__FUNCTION__)) {
       $response = $this->readUntil('>', $timeout);
+      $this->debug('getResponse', $response);
+      // If the command is part of the response, remove it.
+      if ($command && ($index = array_search($command, $response, TRUE)) !== FALSE) {
+        unset($response[$index]);
+        $command = NULL;
+      }
       $this->output = $response;
     }
     return $this->output;
@@ -201,26 +210,46 @@ class TelegramProcess {
   }
 
   /**
-   * Read single line.
+   * Low level string read. Some wrapper around fgets()
    *
-   * @param boolean $wait
-   *   Whether to wait until it is available.
+   * This is tricky because Telegram CLI output lines may
+   * end with newline or line feed. Or when reading until
+   * the prompt '>' there may be no new line.
+   *
+   * Sometimes we get the string "\x1b[0bm" before the prompt.
+   *
+   * @param string $stop
+   *   Aditional stop char besides end of line markers
+   * @param int $timeout
+   *   Timeout, unix time in seconds.
    */
-  function readLine($wait = FALSE, $timeout = NULL) {
+  function readLine($stop = NULL, $timeout = NULL) {
     $timeout = $this->setTimeout($timeout);
-
-    $string = fgets($this->pipes[1]);
-
-    while ($wait && $string === FALSE && $this->checkTimeout(__FUNCTION__)) {
-      $string = fgets($this->pipes[1]);
-      $this->wait();
+    $string = '';
+    // A single line with the stop char
+    // followed by a blank means we are done too.
+    while ($this->checkTimeout(__FUNCTION__) && $string != $stop) {
+      $char = fgetc($this->pipes[1]);
+      if ($char === FALSE) {
+        $this->debug('string=[' . $string . ']');
+        $this->wait();
+        continue;
+      }
+      elseif ($char == "\n" || $char == "\r") {
+        // End of line, return buffered string
+        break;
+      }
+      else {
+        $string .= $char;
+        // Remove some special strings
+        if ($string == "\x1b[0m") {
+          $string = '';
+        }
+      }
     }
-
-    if ($string !== FALSE) {
-      $string = $this->filter($string);
-      $this->log('readLine', $string);
-    }
-
+    // We reach here because end of line or timeout
+    $string = $this->filter($string);
+    $this->debug('readString', $string);
     return $string;
   }
 
@@ -240,7 +269,7 @@ class TelegramProcess {
       if ($string) {
         $lines[] = $string;
       }
-      $string = $this->readLine(TRUE, $timeout);
+      $string = $this->readLine($stop, $timeout);
     }
     return $lines;
   }
@@ -274,7 +303,7 @@ class TelegramProcess {
   /**
    * Flush stream before issuing a command.
    */
-  function flush() {
+  protected function flush() {
     $this->debug('flush');
     $this->readAll();
     // Get rid of output.
@@ -287,7 +316,7 @@ class TelegramProcess {
    * @return boolean
    *   Whether the program started successfully.
    */
-  function start() {
+  public function start() {
     if (!isset($this->process)) {
       $this->pipes = array();
       $cwd = '/tmp';
@@ -344,7 +373,7 @@ class TelegramProcess {
   /**
    * Exit process (send quit command).
    */
-  function close() {
+  public function close() {
     if (isset($this->process)) {
       $this->log('Closing process');
       if (is_resource($this->process)) {
@@ -387,7 +416,7 @@ class TelegramProcess {
    *
    * @param int $miliseconds
    */
-  function wait($miliseconds = 100) {
+  protected function wait($miliseconds = 100) {
     $this->log('Sleep miliseconds', $miliseconds);
     usleep(1000 * $miliseconds);
   }
