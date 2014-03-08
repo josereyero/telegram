@@ -124,7 +124,8 @@ class TelegramProcess {
     // Write command to the process input.
     $this->debug('execCommand', "[$command]");
     $this->write($command . "\n");
-    //$this->wait(100);
+
+    $this->wait(100);
     // Get command response.
     return $this->getResponse();
   }
@@ -140,6 +141,8 @@ class TelegramProcess {
       $command = $this->lastCommand;
       unset($this->lastCommand);
     }
+
+
     while (!$this->output && $this->checkTimeout(__FUNCTION__)) {
       $response = $this->readUntil('>', $timeout);
       $this->debug('getResponse', $response);
@@ -150,6 +153,11 @@ class TelegramProcess {
       }
       $this->output = $response;
     }
+    // For some commands, like contact_list, there may be more lines.
+    while ($this->readAll()) {
+      $this->wait();
+    }
+
     return $this->output;
   }
 
@@ -220,7 +228,9 @@ class TelegramProcess {
   }
 
   /**
-   * Read multiple lines from command output.
+   * Read multiple lines from command output and store them.
+   *
+   * This one filters out blank lines, prompt '>', etc...
    *
    * @return string|FALSE
    *   Full contents of command output.
@@ -230,6 +240,12 @@ class TelegramProcess {
     $string = stream_get_contents($this->pipes[1]);
     if ($string) {
       $string = $this->filter($string);
+      foreach (explode("\n", $string) as $line) {
+        $line = trim($line);
+        if ($line && $line !== '>') {
+          $this->output[] = $line;
+        }
+      }
     }
     $this->debug('readAll', $string);
     return $string;
@@ -250,29 +266,43 @@ class TelegramProcess {
    *   Timeout, unix time in seconds.
    */
   protected function readLine($stop = NULL, $timeout = NULL) {
+    fflush($this->pipes[1]);
     $timeout = $this->setTimeout($timeout);
-    $string = '';
-    // A single line with the stop char
-    // followed by a blank means we are done too.
-    while ($this->checkTimeout(__FUNCTION__) && $string != $stop) {
+    $string = $this->readString();
+    // Read string until we get something or reach timeout.
+    while (!$string && $this->checkTimeout(__FUNCTION__)) {
+      $this->wait();
+      $string = $this->readString($stop);
+    }
+    // We reach here because end of line or timeout
+    //$string = $this->filter($string);
+    $this->debug('readLine', $string);
+    return $string;
+  }
+
+  /**
+   * Read and filter strings.
+   *
+   * This reads strings one at a time until there's nothing to read or
+   * it gets a new line character.
+   */
+  protected function readString($stop = NULL) {
+    $string = $char = '';
+    while ($char !== FALSE && $string !== $stop) {
       $char = fgetc($this->pipes[1]);
-      if ($char === FALSE) {
-        $this->debug('string=[' . $string . ']');
-        $this->wait();
-      }
-      elseif ($char == "\n" || $char == "\r") {
-        // End of line, return buffered string
-        break;
+      if ($char == "\n" || $char == "\r") {
+        // End of line, force return.
+        $char = FALSE;
       }
       else {
         $string .= $char;
-        // Remove some special strings
-        if ($string == "\x1b[0m") {
+        // Filter out some special strings
+        // Remove blanks at the beginning of a line.
+        if ($string == ' ' || $string == "\x1b[0m") {
           $string = '';
         }
       }
     }
-    // We reach here because end of line or timeout
     $string = $this->filter($string);
     $this->debug('readString', $string);
     return $string;
@@ -325,11 +355,12 @@ class TelegramProcess {
   }
 
   /**
-   * Flush stream before issuing a command.
+   * Flush streams before issuing a command.
    */
   protected function flush() {
-    $this->debug('flush');
-    $this->readAll();
+    fflush($this->pipes[1]);
+    $content = stream_get_contents($this->pipes[1]);
+    $this->debug('flush', $content);
     // Get rid of output.
     $this->output = array();
   }
@@ -404,6 +435,8 @@ class TelegramProcess {
         $this->write("quit\n");
         $this->wait(100);
       }
+      // Flush output so we can see any other message.
+      $this->flush();
       // Clean up all resources.
       if (is_array($this->pipes)) {
         foreach ($this->pipes as $pipe) {
