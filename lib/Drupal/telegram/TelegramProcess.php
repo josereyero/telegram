@@ -26,13 +26,12 @@ class TelegramProcess {
   // Input / Output history.
   protected $output;
   protected $input;
-  protected $logs;
   protected $errors;
-  protected $timeout;
 
-  // Helper variables for stream processing
+
+  // Helper variables for processing
   protected $lastCommand;
-  protected $readBuffer;
+  protected $timeout;
 
   /**
    * @var TelegramLogger
@@ -65,7 +64,7 @@ class TelegramProcess {
   /**
    * Get command line.
    */
-  function getCommandLine() {
+  public function getCommandLine() {
     return $this->params['command'] .
       ' -N' . // Print out message numbers
       ' -c ' . $this->params['configfile'] .
@@ -77,10 +76,10 @@ class TelegramProcess {
    *
    * @see proc_get_status()
    *
-   * @return FALSE|array
+   * @return array|FALSE
    *   Status array if process is open, FALSE if not.
    */
-  function getStatus() {
+  public function getStatus() {
     if (isset($this->process)) {
       return proc_get_status($this->process);
     }
@@ -90,23 +89,46 @@ class TelegramProcess {
   }
 
   /**
-   * Low level exec function.
+   * Check whether the process is running.
+   *
+   * @return boolean
+   *   TRUE if running, false if not.
    */
-  function execCommand($command, $params = '') {
-    // Flush output
-    $this->flush();
+  public function isStarted() {
+    return !empty($this->process) && is_resource($this->process);
+  }
+
+  /**
+   * Execute command and get response.
+   *
+   * For a full list of commands and parameters see
+   * https://github.com/vysheng/tg
+   *
+   * @param string $command
+   *   Telegram CLI command to execute.
+   * @param string $arg1, $arg2...
+   *   Optional, variable number of arguments for the command.
+   */
+  public function execCommand() {
+    $args = func_get_args();
+    $command = array_shift($args);
     // Build and sanitize parameters
-    if ($params) {
+    if ($args) {
+      // Filter out NULL values in arguments
+      $args = array_filter($args, function($x) {return isset($x);});
+      $params = implode(' ', $args);
       // @todo Better sanitize params.
-      $params = $this->filter($params);
       $params = str_replace("\n", ' ', $params);
-      $command .= ' ' . $params;
+      $command = trim($command . ' ' . $params);
     }
+    // Flush output, there may be responses to previous commands.
+    $this->flush();
     // Save last command executed.
     $this->lastCommand = $command;
     // Write command to the process input.
     $this->debug('execCommand', "[$command]");
     $this->write($command . "\n");
+    //$this->wait(100);
     // Get command response.
     return $this->getResponse();
   }
@@ -117,14 +139,16 @@ class TelegramProcess {
    * Cycle until response is got, wait for prompt.
    */
   function getResponse() {
-    // $this->output = NULL;
     $timeout = $this->setTimeout();
-    $command = $this->lastCommand;
+    if (isset($this->lastCommand)) {
+      $command = $this->lastCommand;
+      unset($this->lastCommand);
+    }
     while (!$this->output && $this->checkTimeout(__FUNCTION__)) {
       $response = $this->readUntil('>', $timeout);
       $this->debug('getResponse', $response);
       // If the command is part of the response, remove it.
-      if ($command && ($index = array_search($command, $response, TRUE)) !== FALSE) {
+      if (isset($command) && ($index = array_search($command, $response, TRUE)) !== FALSE) {
         unset($response[$index]);
         $command = NULL;
       }
@@ -173,19 +197,20 @@ class TelegramProcess {
           }
         }
       }
-      	  $countresult = count($resultmed);
+
+      $countresult = count($resultmed);
 		  (isset($key)) ? $countkey = count($key):'';
-		  for ($i=0 ; $i<$countresult ; $i++){
+		  for ($i=0 ; $i<$countresult ; $i++) {
 		  	(!isset($key)) ? $countkey = count($resultmed[$i]['matches']):'';
 		    $z=0;
-      		foreach ($resultmed[$i]['matches'] as $lines) {
-      		  if ($z == $countkey){
-      		    $z=0;
-      		  }
-      		  (isset($key)) ? $result[$i][$key[$z]] = $lines : $result[$i][$z] = $lines;
-      		  $z++;
-      	    }
-      	  }
+    		foreach ($resultmed[$i]['matches'] as $lines) {
+    		  if ($z == $countkey){
+    		    $z=0;
+    		  }
+    		  (isset($key)) ? $result[$i][$key[$z]] = $lines : $result[$i][$z] = $lines;
+    		  $z++;
+    	  }
+      }
       $this->debug("parseResponse results", $result);
       // Returns resulting array from all matching lines
       return $result;
@@ -199,12 +224,17 @@ class TelegramProcess {
   }
 
   /**
-   * Read multiple lines.
+   * Read multiple lines from command output.
+   *
+   * @return string|FALSE
+   *   Full contents of command output.
    */
-  function readAll() {
+  protected function readAll() {
     fflush($this->pipes[1]);
     $string = stream_get_contents($this->pipes[1]);
-    $string = $this->filter($string);
+    if ($string) {
+      $string = $this->filter($string);
+    }
     $this->debug('readAll', $string);
     return $string;
   }
@@ -223,7 +253,7 @@ class TelegramProcess {
    * @param int $timeout
    *   Timeout, unix time in seconds.
    */
-  function readLine($stop = NULL, $timeout = NULL) {
+  protected function readLine($stop = NULL, $timeout = NULL) {
     $timeout = $this->setTimeout($timeout);
     $string = '';
     // A single line with the stop char
@@ -233,7 +263,6 @@ class TelegramProcess {
       if ($char === FALSE) {
         $this->debug('string=[' . $string . ']');
         $this->wait();
-        continue;
       }
       elseif ($char == "\n" || $char == "\r") {
         // End of line, return buffered string
@@ -259,10 +288,9 @@ class TelegramProcess {
    * @return array
    *   Array of (trimmed) string lines before the stop char.
    */
-  function readUntil($stop = '>', $timeout = NULL) {
+  protected function readUntil($stop = '>', $timeout = NULL) {
     $timeout = $this->setTimeout($timeout);
     $this->debug("readUntil $stop");
-    $stop = trim($stop);
     $lines = array();
     $string = '';
     while ($string !== $stop && $this->checkTimeout(__FUNCTION__)) {
@@ -282,7 +310,7 @@ class TelegramProcess {
    * @param boolean $flush
    *   Whether to flush the stream after writing.
    */
-  function write($string, $flush = TRUE) {
+  protected function write($string, $flush = TRUE) {
     $this->debug("writeString: $string");
     $result = fwrite($this->pipes[0], $string);
     if ($flush) {
@@ -294,7 +322,7 @@ class TelegramProcess {
   /**
    * Filter string, remove ANSI color codes.
    */
-  function filter($string) {
+  protected function filter($string) {
     // Filter control codes in output
    	$string = preg_replace('/\x1B\[[0-9;]*[mK]/u', '', $string);
     return trim($string);
@@ -313,73 +341,73 @@ class TelegramProcess {
   /**
    * Start process.
    *
+   * We try to start the process only once.
+   *
    * @return boolean
-   *   Whether the program started successfully.
+   *   TRUE if the program started successfully.
    */
   public function start() {
     if (!isset($this->process)) {
+      // Initialize variables and pipes for input/output/errors
       $this->pipes = array();
-      $cwd = '/tmp';
       $descriptorspec = array(
          0 => array("pipe", "r"),  // stdin is a pipe that the child will read from
          1 => array("pipe", "w+"),  // stdout is a pipe that the child will write to
          2 => array("pipe", "w+"),  // stderr
-         //2 => array("file", '/tmp/telegram-error.txt', "a") // stderr is a file to write to
       );
+
       $this->process = proc_open($this->getCommandLine(), $descriptorspec, $this->pipes, $this->params['homepath']);
 
-      if (is_resource($this->process)) {
-        // Read first four lines that are credits and license messages.
-        $this->readLine(TRUE);
-        $this->readLine(TRUE);
-        $this->readLine(TRUE);
-        $this->readLine(TRUE);
+      if (!is_resource($this->process)) {
+        // Process failed, close everything.
+        $this->logger->logError('Failed to start Telegram CLI');
+      }
+      else {
+        // Log initial status and pid.
+        $status = $this->getStatus();
+        $this->debug('Process status', $status);
+        $pid = $status['pid'];
+        $this->log('Process started with pid', $pid);
 
         // Use non blocking streams.
         stream_set_blocking($this->pipes[1], 0);
         stream_set_blocking($this->pipes[2], 0);
 
-        // Log initial status.
-        $status = $this->getStatus();
-        $pid = $status['pid'];
-        $this->debug('Process status', $status);
-
-        // Wait for a while. For some reason it needs some waiting before
-        // we issue the first command.
-        $this->wait(100);
-
-        //$this->flush();
-        // Read until prompt.
-        $this->readUntil('>');
-
-        if ($error = $this->getErrors()) {
-          return FALSE;
+        // Check for errors during start up.
+        if ($this->getErrors()) {
+          $this->logger->logError('Startup errors in Telegram CLI');
         }
         else {
-          $this->log("Process started with pid $pid");
+          // Read first four lines that are credits and license messages.
+          $this->readUntil('>');
+          // The first dialog list should stay there just in case the client
+          // wants to read it.
         }
       }
-      else {
-        // Process failed, close everything.
-        $this->logger->logError('Process failed to start, closing...');
-        $this->getErrors();
-        $this->close();
-        return FALSE;
+
+      // Final check for errors, clean up if any
+      $errors = $this->getErrors();
+
+      if (!is_resource($this->process) || $errors) {
+        $this->stop();
+        // Mark process so we don't try to start it again.
+        $this->process = FALSE;
       }
     }
-    return is_resource($this->process);
+    return $this->isStarted();
   }
 
   /**
    * Exit process (send quit command).
    */
-  public function close() {
-    if (isset($this->process)) {
+  public function stop() {
+    if (isset($this->process) && $this->process !== FALSE) {
       $this->log('Closing process');
       if (is_resource($this->process)) {
         $this->write("quit\n");
-        $this->wait(1000);
+        $this->wait(100);
       }
+      // Clean up all resources.
       if (is_array($this->pipes)) {
         foreach ($this->pipes as $pipe) {
           fclose($pipe);
@@ -447,7 +475,7 @@ class TelegramProcess {
    * @return int
    *   Timestamp for timeout
    */
-  function setTimeout($time = NULL) {
+  protected function setTimeout($time = NULL) {
     return $this->timeout = $time ? $time : time() + $this->params['timeout'];
   }
 
@@ -456,27 +484,30 @@ class TelegramProcess {
    *
    * @return string
    */
-  function getLogs() {
+  public function getLogs() {
     return $this->logger->formatLogs();
   }
 
   /**
    * Get errors.
+   *
+   * @return array|FALSE
+   *   Array of strings with error messages if any.
    */
-  function getErrors() {
+  public function getErrors() {
     if (isset($this->pipes) && is_resource($this->pipes[2])) {
       while ($error = fgets($this->pipes[2])) {
         $this->logger->logError('getErrors', $error);
         $this->errors[] = $error;
       }
     }
-    return isset($this->errors) ? $this->errors : NULL;
+    return isset($this->errors) ? $this->errors : FALSE;
   }
 
   /**
    * Magic destruct. No need for explicit closing.
    */
   public function __destruct() {
-    $this->close();
+    $this->stop();
   }
 }

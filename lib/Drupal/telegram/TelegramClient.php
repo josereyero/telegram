@@ -252,7 +252,7 @@ class TelegramClient {
   function stop() {
     if (isset($this->process)) {
       $this->log('Client stopping process');
-      $this->process->close();
+      $this->process->stop();
       unset($this->process);
     }
   }
