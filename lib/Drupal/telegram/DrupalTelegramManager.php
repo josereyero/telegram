@@ -222,9 +222,8 @@ class DrupalTelegramManager {
         // @todo Decide later.
       }
     }
-    // Add new contacts, remining in the array.
+    // Add new contacts, remaining in the array.
     foreach ($telegram as $contact) {
-      $contact = new TelegramContact($contact);
       $this->getStorage()->contactSave($contact);
       $this->contacts[] = $contact;
     }
@@ -238,18 +237,53 @@ class DrupalTelegramManager {
   }
 
   /**
+   * Refresh stored messages.
+   *
+   * @param int $limit
+   *   Maximum number of messages to process.
+   * @param boolean $new
+   *   Whether to read only new messages.
+   *
+   * @return array
+   *   Multiple lists of messages indexed by state.
+   */
+  function refreshMessages($limit = 0, $new = TRUE) {
+    $list = $this->readMessages($limit, $new);
+    $result = array();
+    foreach ($list as $message) {
+      $stored = $this->getStorage()->messageLoadMultiple(array('id' => $message->id));
+      if ($existing = reset($stored)) {
+        // @todo update stored one?
+        $result['updated'][$existing->id] = $existing;
+      }
+      else {
+        $this->getStorage()->messageSave($message);
+        $result['created'][$message->id] = $message;
+      }
+    }
+    return $result;
+  }
+
+  /**
    * Get new messages.
    *
    * @todo When getting user history, the newest messages may not be the incoming ones.
+   *
+   * @param int $limit
+   *   Limit the number of messages.
+   * @param booloean $new
+   *   TRUE to get only new messages.
    */
-  protected function getNewMessages($limit = 0) {
+  protected function readMessages($limit = 0, $new = TRUE) {
     $dialog_list = $this->getClient()->getDialogList();
     $count = 0;
     $messages = array();
     while ((!$limit || $count < $limit) && $dialog = array_shift($dialog_list)) {
-      if ($dialog->messages && $dialog->state == 'unread') {
+      if (!$new || $dialog->messages && $dialog->state == 'unread') {
+        $read = $new ? (int)$dialog->messages : 40;
+        $read = $limit ? min($read, $limit - $count) : $read;
         $peer = TelegramContact::nameToPeer($dialog->user);
-        if ($more = $this->getClient()->getHistory($peer, $dialog->messages)) {
+        if ($more = $this->getClient()->getHistory($peer, $read)) {
           $messages = array_merge($messages, $more);
           $count += count($more);
         }
@@ -272,13 +306,6 @@ class DrupalTelegramManager {
       $list[$index] = $message;
     }
     return $list;
-  }
-
-  /**
-   * Helper function.
-   */
-  public static function nameToPeer($name) {
-    return str_replace(' ', '_', $name);
   }
 
   /**

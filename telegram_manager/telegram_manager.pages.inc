@@ -61,7 +61,6 @@ function telegram_manager_send_form_submit($form, &$form_state) {
       drupal_set_message(t('Your message has been queued for delivery.'));
     }
     $form_state['rebuild'] = TRUE;
-    $telegram->stop();
   }
 
 
@@ -122,7 +121,8 @@ function telegram_manager_message_list_form($form, &$form_state) {
   $form = _telegram_test_form($form, $form_state);
 
   // Buttons
-  $form['refresh'] = array('#type' => 'submit', '#value' => t('Refresh'));
+  $form['read'] = array('#type' => 'submit', '#value' => t('Read new'));
+  $form['refresh'] = array('#type' => 'submit', '#value' => t('Refresh all'));
 
   return $form;
 }
@@ -133,16 +133,28 @@ function telegram_manager_message_list_form($form, &$form_state) {
 function telegram_manager_message_list_form_submit($form, &$form_state) {
 
   switch ($form_state['values']['op']) {
-    case t('Refresh'):
-      $messages = telegram_manager()->readNewMessages();
-      if ($messages) {
-        drupal_set_message(format_plural(count($messages), '1 new message', '@count new messages'));
-      }
-      else {
-        drupal_set_message(t('No new messages'));
-      }
+    case t('Refresh all'):
+      $messages = telegram_manager()->refreshMessages(0, FALSE);
+      break;
+    case t('Read new'):
+      $messages = telegram_manager()->refreshMessages(0, TRUE);
       break;
   }
+
+  if ($messages) {
+    $updated = isset($messages['updated']) ? count($messages['updated']) : 0;
+    $created = isset($messages['created']) ? count($messages['created']) : 0;
+    if ($created) {
+      drupal_set_message(format_plural($created, 'Read 1 new message', 'Read @count new messages'));
+    }
+    if ($updated) {
+      drupal_set_message(format_plural($updated, 'Updated 1 message', 'Updated @count messages'));
+    }
+  }
+  else {
+    drupal_set_message(t('No new messages'));
+  }
+
   $form_state['rebuild'] = TRUE;
 }
 
