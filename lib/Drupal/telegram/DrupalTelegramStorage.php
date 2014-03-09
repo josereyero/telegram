@@ -70,10 +70,17 @@ class DrupalTelegramStorage {
   }
 
   /**
-   * Create contact.
+   * Delete message.
    */
-  function messageDelete($contact) {
+  function messageDelete($message) {
     return $this->delete('telegram_message', $contact);
+  }
+
+  /**
+   * Delete multiple messages.
+   */
+  function messageDeleteAll($conditions = array()) {
+    return $this->deleteMultiple('telegram_message', $conditions);
   }
 
   /**
@@ -113,6 +120,17 @@ class DrupalTelegramStorage {
       db_delete($table)->condition('oid', $object->oid)->execute();
       $object->oid = NULL;
     }
+  }
+
+  /**
+   * Delete multiple objects.
+   */
+  protected function deleteMultiple($table, $conditions) {
+    $query = db_delete($table);
+    foreach ($conditions as $field => $value) {
+      $query->condition($field, $value);
+    }
+    return $query->execute();
   }
 
   /**

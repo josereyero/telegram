@@ -123,7 +123,7 @@ function telegram_manager_message_list_form($form, &$form_state) {
   // Buttons
   $form['read'] = array('#type' => 'submit', '#value' => t('Read new'));
   $form['refresh'] = array('#type' => 'submit', '#value' => t('Refresh all'));
-
+  $form['delete'] = array('#type' => 'submit', '#value' => t('Delete all'));
   return $form;
 }
 
@@ -139,9 +139,13 @@ function telegram_manager_message_list_form_submit($form, &$form_state) {
     case t('Read new'):
       $messages = telegram_manager()->refreshMessages(0, TRUE);
       break;
+    case t('Delete all'):
+      telegram_manager()->deleteMessages();
+      drupal_set_message(t('Deleted all stored messages'));
+      break;
   }
 
-  if ($messages) {
+  if (isset($messages)) {
     $updated = isset($messages['updated']) ? count($messages['updated']) : 0;
     $created = isset($messages['created']) ? count($messages['created']) : 0;
     if ($created) {
@@ -150,9 +154,9 @@ function telegram_manager_message_list_form_submit($form, &$form_state) {
     if ($updated) {
       drupal_set_message(format_plural($updated, 'Updated 1 message', 'Updated @count messages'));
     }
-  }
-  else {
-    drupal_set_message(t('No new messages'));
+    if (!$created && !$updated) {
+      drupal_set_message(t('No new messages'));
+    }
   }
 
   $form_state['rebuild'] = TRUE;

@@ -127,8 +127,8 @@ function telegram_schema() {
       ),
       'text' => array(
         'description' => "The text of the {telegram_message}.",
-        'type' => 'varchar',
-        'length' => 255,
+        'type' => 'text',
+        'size' => 'big',
         'not null' => FALSE,
       ),
       'source' => array(

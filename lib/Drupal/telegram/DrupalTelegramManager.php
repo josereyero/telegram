@@ -150,10 +150,39 @@ class DrupalTelegramManager {
   }
 
   /**
+   * Save contact to storage.
+   *
    * @param TelegramContact $contact.
    */
   function saveContact($contact) {
     return $this->getStorage()->contactSave($contact);
+  }
+
+  /**
+   * Save message to storage.
+   *
+   * We may need to fix the text encoding to avoid this type of errors:
+   *
+   * PDOException: SQLSTATE[HY000]: General error: 1366
+   * Incorrect string value: '\xF0\x9F\x98\x9C' for column 'text' at row 1:
+   *
+   * (This happens with a smiley).
+   */
+  function saveMessage($message) {
+    // For new messages, sanitize text body.
+    if (!isset($message->oid) && $message->source == 'telegram') {
+      /*
+      if (!mb_check_encoding($message->text, 'UTF-8')) {
+        $message->text = utf8_encode($message->text);
+        dpm($message->text, 'fixed encoding, method 1');
+      }
+      */
+      // Detected encoding is UTF-8 for these ones
+      //$encoding = mb_detect_encoding($message->text);
+      //dpm($message->text, "Encoding: $encoding");
+      $message->text = utf8_encode($message->text);
+    }
+    return $this->getStorage()->messageSave($message);
   }
 
   /**
@@ -257,7 +286,8 @@ class DrupalTelegramManager {
         $result['updated'][$existing->id] = $existing;
       }
       else {
-        $this->getStorage()->messageSave($message);
+        $message->source = 'telegram';
+        $this->saveMessage($message);
         $result['created'][$message->id] = $message;
       }
     }
@@ -306,6 +336,13 @@ class DrupalTelegramManager {
       $list[$index] = $message;
     }
     return $list;
+  }
+
+  /**
+   * Delete messages.
+   */
+  function deleteMessages($conditions = array()) {
+    return $this->getStorage()->messageDeleteAll($conditions);
   }
 
   /**
