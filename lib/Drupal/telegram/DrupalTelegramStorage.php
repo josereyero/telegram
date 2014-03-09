@@ -27,8 +27,12 @@ class DrupalTelegramStorage {
   /**
    * Load single contact
    */
-  function contactLoadMultiple($conditions, $index = 'phone') {
-    return $this->loadMultiple('telegram_contact', $conditions, $index, '\Drupal\telegram\TelegramContact');
+  function contactLoadMultiple($conditions, $options = array()) {
+    $options += array(
+      'index' => 'phone',
+      'class' => '\Drupal\telegram\TelegramContact'
+    );
+    return $this->loadMultiple('telegram_contact', $conditions, $options);
   }
 
   /**
@@ -57,8 +61,12 @@ class DrupalTelegramStorage {
   /**
    * Load multiple messages
    */
-  function messageLoadMultiple($conditions, $index = 'oid') {
-    return $this->loadMultiple('telegram_message', $conditions, $index, '\Drupal\telegram\TelegramMessage');
+  function messageLoadMultiple($conditions, $options = array()) {
+    $options += array(
+      'index' => 'oid',
+      'class' => '\Drupal\telegram\TelegramMessage'
+    );
+    return $this->loadMultiple('telegram_message', $conditions, $options);
   }
 
   /**
@@ -136,14 +144,31 @@ class DrupalTelegramStorage {
   /**
    * Load objects
    */
-  protected function loadMultiple($table, $conditions, $index, $class) {
+  protected function loadMultiple($table, $conditions, $options) {
+    $options += array(
+      'index' => 'oid',
+      'limit' => NULL,
+      'order' => array(),
+    );
+
     $query = db_select($table, 't')->fields('t', array());
     foreach ($conditions as $field => $value) {
       $query->condition($field, $value);
     }
+    foreach ($options['order'] as $field => $type) {
+      $query->orderBy($field, $type);
+    }
+    if ($options['limit']) {
+      $query = $query->extend('PagerDefault');
+      $query->limit($options['limit']);
+    }
     $result = $query->execute();
-    $result->setFetchMode(PDO::FETCH_CLASS, $class);
+
+    if (isset($options['class'])) {
+      $result->setFetchMode(PDO::FETCH_CLASS, $options['class']);
+    }
     $list = array();
+    $index = $options['index'];
     foreach ($result->fetchAll() as $object) {
       $list[$object->$index] = $object;
     };

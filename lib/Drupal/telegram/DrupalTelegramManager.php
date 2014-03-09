@@ -224,8 +224,8 @@ class DrupalTelegramManager {
   /**
    * Get contact list.
    */
-  function getContactList($conditions = array()) {
-    return $this->getStorage()->contactLoadMultiple($conditions);
+  function getContactList($conditions = array(), $options = array()) {
+    return $this->getStorage()->contactLoadMultiple($conditions, $options);
   }
 
   /**
@@ -262,8 +262,8 @@ class DrupalTelegramManager {
   /**
    * Get message list.
    */
-  function getMessageList($conditions = array()) {
-    return $this->getStorage()->messageLoadMultiple($conditions);
+  function getMessageList($conditions = array(), $options = array()) {
+    return $this->getStorage()->messageLoadMultiple($conditions, $options);
   }
 
   /**

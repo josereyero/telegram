@@ -71,11 +71,7 @@ function telegram_manager_send_form_submit($form, &$form_state) {
  */
 function telegram_manager_contact_list_page() {
   $build['form'] = drupal_get_form('telegram_manager_contact_list_form');
-  $build['contacts'] = array(
-    '#title' => t('Contacts'),
-    '#type' => 'item',
-    '#markup' => telegram_manager_contact_list(),
-  );
+  $build['contacts'] = telegram_manager_contact_list();
   return $build;
 }
 
@@ -106,11 +102,7 @@ function telegram_manager_contact_list_form_submit($form, &$form_state) {
  */
 function telegram_manager_message_list_page() {
   $build['form'] = drupal_get_form('telegram_manager_message_list_form');
-  $build['contacts'] = array(
-    '#title' => t('Contacts'),
-    '#type' => 'item',
-    '#markup' => telegram_manager_message_list(),
-  );
+  $build['content'] = telegram_manager_message_list();
   return $build;
 }
 /**
@@ -167,7 +159,9 @@ function telegram_manager_message_list_form_submit($form, &$form_state) {
  * Print read messages .
  */
 function telegram_manager_message_list() {
-  $message_list = telegram_manager()->getMessageList();
+  $options['order'] = array('created' => 'DESC');
+  $options['limit'] = 20;
+  $message_list = telegram_manager()->getMessageList(array(), $options);
   $header = array(t('Id'), t('Date'), t('Peer'), t('Type'), t('Message'), t('Options'));
   $rows = array();
   foreach ($message_list as $message) {
@@ -180,14 +174,24 @@ function telegram_manager_message_list() {
       l(t('view'), 'admin/config/telegram/manager/message/' . $message->oid),
     );
   }
-  $output = theme('table', array('header' => $header, 'rows' => $rows));
-  return $output;
+  $build['data'] = array(
+   '#theme' => 'table',
+   '#header' => $header,
+   '#rows' => $rows
+  );
+  $build['pager'] = array(
+    '#theme' => 'pager',
+    '#weight' => 5,
+  );
+  return $build;
 }
 
 /**
  * Print contact list.
  */
 function telegram_manager_contact_list() {
+  $options['order'] = array('name' => 'ASC');
+  $options['limit'] = 20;
   $contact_list = telegram_manager()->getContactList();
   $header = array(t('Id'), t('Peer'), t('Name'), t('Phone'));
   $rows = array();
@@ -199,6 +203,15 @@ function telegram_manager_contact_list() {
       check_plain($contact->phone),
     );
   }
-  return theme('table', array('header' => $header, 'rows' => $rows));
+  $build['data'] = array(
+   '#theme' => 'table',
+   '#header' => $header,
+   '#rows' => $rows
+  );
+  $build['pager'] = array(
+    '#theme' => 'pager',
+    '#weight' => 5,
+  );
+  return $build;
 }
 
