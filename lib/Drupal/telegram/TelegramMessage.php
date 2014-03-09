@@ -26,22 +26,33 @@ class TelegramMessage extends TelegramData {
    *
    * @var string
    */
-  public $id;
+  public $idmsg;
 
   /**
+   * Message text.
+   *
    * @var string
    */
+  public $text;
+
+  /**
+   * Other source / destination parameters.
+   *
+   * @var string
+   */
+  public $contactid;
+  public $name;
   public $phone;
   public $source;
   public $peer;
-  public $text;
+
 
   /**
    * Message status (incoming, outgoing).
    *
    * @var string
    */
-  public $type = 'incoming';
+  public $direction = 'incoming';
 
   /**
    * Possible values are 0 = done, 1 = queued, 2 = error
@@ -49,28 +60,28 @@ class TelegramMessage extends TelegramData {
   public $status = 0;
 
   /**
-   * User id.
+   * Drupal User id.
    */
-  public $uid;
+  public $uid = 0;
 
-  /**
-   * @var Drupal/telegram/TelegramContact
-   */
-  protected $contact;
 
   /**
    * Set destination contact.
+   *
+   * @param TelegramContact $contact
    */
   public function setDestination($contact) {
-    $this->type = 'outgoing';
+    $this->direction = 'outgoing';
     return $this->setContact($contact);
   }
 
   /**
    * Set contact data to message.
+   *
+   * @param TelegramContact $contact
    */
   public function setContact($contact) {
-    foreach (array('phone', 'peer', 'uid') as $field) {
+    foreach (array('idcontact', 'phone', 'peer', 'name', 'uid') as $field) {
       if (isset($contact->$field)) {
         $this->$field = $contact->$field;
       }

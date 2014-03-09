@@ -235,26 +235,27 @@ class DrupalTelegramManager {
    * update status for existing contacts, add new ones.
    */
   function refreshContactList() {
-    $stored = $this->getContactList();
-    $telegram = $this->getClient()->getContactList();
+    if ($telegram = $this->getClient()->getContactList()) {
+      $stored = $this->getContactList();
 
-    foreach ($stored as $index => $contact) {
-      if (isset($telegram[$contact->phone])) {
-        // Existing contact, update values
-        $contact->setData($telegram[$contact->phone]);
-        $this->saveContact($contact);
-        // Remove from array
-        unset($telegram[$contact->phone]);
+      foreach ($stored as $index => $contact) {
+        if (isset($telegram[$contact->phone])) {
+          // Existing contact, update values
+          $contact->setData($telegram[$contact->phone]);
+          $this->saveContact($contact);
+          // Remove from array
+          unset($telegram[$contact->phone]);
+        }
+        else {
+          // Contact, deleted. Delete?
+          // @todo Decide later.
+        }
       }
-      else {
-        // Contact, deleted. Delete?
-        // @todo Decide later.
+      // Add new contacts, remaining in the array.
+      foreach ($telegram as $contact) {
+        $this->getStorage()->contactSave($contact);
+        $this->contacts[] = $contact;
       }
-    }
-    // Add new contacts, remaining in the array.
-    foreach ($telegram as $contact) {
-      $this->getStorage()->contactSave($contact);
-      $this->contacts[] = $contact;
     }
   }
 
@@ -280,15 +281,15 @@ class DrupalTelegramManager {
     $list = $this->readMessages($limit, $new);
     $result = array();
     foreach ($list as $message) {
-      $stored = $this->getStorage()->messageLoadMultiple(array('id' => $message->id));
+      $stored = $this->getStorage()->messageLoadMultiple(array('idmsg' => $message->idmsg));
       if ($existing = reset($stored)) {
         // @todo update stored one?
-        $result['updated'][$existing->id] = $existing;
+        $result['updated'][$existing->idmsg] = $existing;
       }
       else {
         $message->source = 'telegram';
         $this->saveMessage($message);
-        $result['created'][$message->id] = $message;
+        $result['created'][$message->idmsg] = $message;
       }
     }
     return $result;
@@ -305,17 +306,20 @@ class DrupalTelegramManager {
    *   TRUE to get only new messages.
    */
   protected function readMessages($limit = 0, $new = TRUE) {
-    $dialog_list = $this->getClient()->getDialogList();
-    $count = 0;
     $messages = array();
-    while ((!$limit || $count < $limit) && $dialog = array_shift($dialog_list)) {
-      if (!$new || $dialog->messages && $dialog->state == 'unread') {
-        $read = $new ? (int)$dialog->messages : 40;
-        $read = $limit ? min($read, $limit - $count) : $read;
-        $peer = TelegramContact::nameToPeer($dialog->user);
-        if ($more = $this->getClient()->getHistory($peer, $read)) {
-          $messages = array_merge($messages, $more);
-          $count += count($more);
+
+    if ($dialog_list = $this->getClient()->getDialogList()) {
+      $count = 0;
+
+      while ((!$limit || $count < $limit) && $dialog = array_shift($dialog_list)) {
+        if (!$new || $dialog->messages && $dialog->state == 'unread') {
+          $read = $new ? (int)$dialog->messages : 40;
+          $read = $limit ? min($read, $limit - $count) : $read;
+          $peer = TelegramContact::nameToPeer($dialog->user);
+          if ($more = $this->getClient()->getHistory($peer, $read)) {
+            $messages = array_merge($messages, $more);
+            $count += count($more);
+          }
         }
       }
     }

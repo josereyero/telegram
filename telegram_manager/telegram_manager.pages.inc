@@ -172,10 +172,10 @@ function telegram_manager_message_list() {
   $rows = array();
   foreach ($message_list as $message) {
     $rows[] = array(
-      check_plain($message->oid),
+      check_plain($message->idmsg),
       format_date($message->created),
       check_plain($message->peer),
-      check_plain($message->type),
+      check_plain($message->direction),
       check_plain($message->text),
       l(t('view'), 'admin/config/telegram/manager/message/' . $message->oid),
     );
@@ -189,10 +189,11 @@ function telegram_manager_message_list() {
  */
 function telegram_manager_contact_list() {
   $contact_list = telegram_manager()->getContactList();
-  $header = array(t('Peer'), t('Name'), t('Phone'));
+  $header = array(t('Id'), t('Peer'), t('Name'), t('Phone'));
   $rows = array();
   foreach ($contact_list as $contact) {
     $rows[] = array(
+      check_plain($contact->idcontact),
       check_plain($contact->peer),
       check_plain($contact->name),
       check_plain($contact->phone),

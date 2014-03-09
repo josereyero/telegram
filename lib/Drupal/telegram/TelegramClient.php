@@ -73,27 +73,28 @@ class TelegramClient {
    * Parse contact list from response.
    */
   protected function parseContactList() {
-	    $pattern = array(
-	      0 => '/User\s\#(\d+)\:\s([\w\s]+)\s\((\w+)\s(\d+)\)\s(\offline)\.\s\w+\s\w+\s\[(\w+\/\w+\/\w+)\s(\w+\:\w+\:\w+)\]/u',
-	      1 => '/User\s\#(\d+)\:\s([\w\s]+)\s\((\w+)\s(\d+)\)\s(\online)/',
-	    );
+    $pattern = array(
+      0 => '/User\s\#(\d+)\:\s([\w\s]+)\s\((\w+)\s(\d+)\)\s(\offline)\.\s\w+\s\w+\s\[(\w+\/\w+\/\w+)\s(\w+\:\w+\:\w+)\]/u',
+      1 => '/User\s\#(\d+)\:\s([\w\s]+)\s\((\w+)\s(\d+)\)\s(\online)/',
+    );
 
-	    $mapping = array(
-  	    0 => 'string',
-  	    1 => 'id',
-  	    2 => 'name',
-  	    3 => 'peer',
-  	    4 => 'phone',
-  	    5 => 'status',
-  	    6 => 'date',
-  	    7 => 'hour',
-	    );
+    $mapping = array(
+	    0 => 'string',
+	    1 => 'idcontact',
+	    2 => 'name',
+	    3 => 'peer',
+	    4 => 'phone',
+	    5 => 'status',
+	    6 => 'date',
+	    7 => 'hour',
+    );
 
-      $translator = function($data) {
-  	    return new TelegramContact($data);
-  	  };
+    $translator = function($data) {
+      // @todo Normalize date and time
+	    return new TelegramContact($data);
+	  };
 
-  	  return $this->parseResponse($pattern, $mapping, 'phone', $translator);
+	  return $this->parseResponse($pattern, $mapping, 'phone', $translator);
   }
 
   /**
@@ -195,25 +196,25 @@ class TelegramClient {
 
   	  $mapping = array(
   	    0 => 'string',
-    	  1 => 'id',
+    	  1 => 'idmsg',
     	  2 => 'date',
     	  3 => 'name',
-    	  4 => 'direction',
+    	  4 => '_direction',
     	  5 => 'text',
   	  );
 
   	  $translator = function($data) {
-  	    if ($data['direction'] == '«««' || $data['direction'] == '<<<') {
-  	      $data['type'] = 'incoming';
+  	    if ($data['_direction'] == '«««' || $data['_direction'] == '<<<') {
+  	      $data['direction'] = 'incoming';
   	    }
   	    else {
-  	      $data['type'] = 'outgoing';
+  	      $data['direction'] = 'outgoing';
   	    }
   	    $data['peer'] = TelegramContact::nameToPeer($data['name']);
   	    return new TelegramMessage($data);
   	  };
 
-  	  return $this->parseResponse($pattern, $mapping, 'id', $translator);
+  	  return $this->parseResponse($pattern, $mapping, 'idmsg', $translator);
   	}
   }
 

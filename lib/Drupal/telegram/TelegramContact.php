@@ -12,12 +12,21 @@ namespace Drupal\telegram;
 class TelegramContact extends TelegramData {
 
   /**
+   * Unique Telegram contact id
+   *
    * @var string
    */
-  public $id;
+  public $idcontact;
+
+  /**
+   * Other values from Telegram
+   *
+   * @var string
+   */
   public $name;
   public $phone;
   public $peer;
+
   /**
    * Contact source:
    * - 'telegram', Showed up in telegram agenda.

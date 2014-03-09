@@ -45,7 +45,9 @@ abstract class TelegramData {
    */
   public function setData($data) {
     foreach ((array)$data as $name => $value) {
-      $this->$name = $value;
+      if (isset($value)) {
+        $this->$name = $value;
+      }
     }
   }
 }
