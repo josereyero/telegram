@@ -48,7 +48,29 @@ function telegram_manager_menu() {
      'file' => 'telegram_manager.pages.inc',
      'type' => MENU_LOCAL_TASK,
    );
-
+   $items['admin/config/telegram/manager/contact/%telegram_manager_contact'] = array(
+     'title' => 'Contact',
+     'description' => 'View contact list',
+     'page callback' => 'telegram_manager_contact_page',
+     'page arguments' => array(5),
+     'access arguments' => array('administer site configuration'),
+     'file' => 'telegram_manager.pages.inc',
+     'type' => MENU_CALLBACK,
+   );
+   $items['admin/config/telegram/manager/contact/%telegram_manager_contact/view'] = array(
+     'title' => 'Contact',
+     'type' => MENU_DEFAULT_LOCAL_TASK,
+     'weight' => -10
+   );
+   $items['admin/config/telegram/manager/contact/%telegram_manager_contact/edit'] = array(
+     'title' => 'Edit',
+     'description' => 'View contact list',
+     'page callback' => 'drupal_get_form',
+     'page arguments' => array('telegram_manager_contact_form',5),
+     'access arguments' => array('administer site configuration'),
+     'file' => 'telegram_manager.pages.inc',
+     'type' => MENU_LOCAL_TASK,
+   );
    return $items;
 }
 
@@ -64,6 +86,14 @@ function telegram_manager() {
     $telegram['manager'] = new DrupalTelegramManager($client, new DrupalTelegramStorage());
   }
   return $telegram['manager'];
+}
+
+/**
+ * Menu loader.
+ */
+function telegram_manager_contact_load($oid) {
+  $contacts = telegram_manager()->getContactList(array('oid' => $oid));
+  return reset($contacts);
 }
 
 

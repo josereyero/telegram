@@ -76,6 +76,29 @@ function telegram_manager_contact_list_page() {
 }
 
 /**
+ * Cotnact page.
+ */
+function telegram_manager_contact_page($contact) {
+  $build['contact'] = array(
+    '#type' => 'fieldset',
+    '#title' => $contact->name,
+  );
+  $build['contact']['peer'] = array(
+    '#title' => t('Peer'),
+    '#type' => 'item',
+    '#markup' => check_plain($contact->peer),
+  );
+  $build['contact']['phone'] = array(
+    '#title' => t('Phone'),
+    '#type' => 'item',
+    '#markup' => check_plain($contact->phone),
+  );
+  $build['messages'] = telegram_manager_message_list(array('peer' => $contact->peer));
+
+  return $build;
+}
+
+/**
  * Test form.
  */
 function telegram_manager_contact_list_form($form, &$form_state) {
@@ -158,10 +181,12 @@ function telegram_manager_message_list_form_submit($form, &$form_state) {
 /**
  * Print read messages .
  */
-function telegram_manager_message_list() {
-  $options['order'] = array('created' => 'DESC');
-  $options['limit'] = 20;
-  $message_list = telegram_manager()->getMessageList(array(), $options);
+function telegram_manager_message_list($conditions = array(), $options = array()) {
+  $options += array(
+    'order' => array('created' => 'DESC'),
+    'limit' => 20,
+  );
+  $message_list = telegram_manager()->getMessageList($conditions, $options);
   $header = array(t('Id'), t('Date'), t('Peer'), t('Type'), t('Message'), t('Options'));
   $rows = array();
   foreach ($message_list as $message) {
@@ -189,11 +214,14 @@ function telegram_manager_message_list() {
 /**
  * Print contact list.
  */
-function telegram_manager_contact_list() {
-  $options['order'] = array('name' => 'ASC');
-  $options['limit'] = 20;
-  $contact_list = telegram_manager()->getContactList();
-  $header = array(t('Id'), t('Peer'), t('Name'), t('Phone'));
+function telegram_manager_contact_list($conditions = array(), $options = array()) {
+
+  $options += array(
+    'order' => array('name' => 'ASC'),
+    'limit' => 20,
+  );
+  $contact_list = telegram_manager()->getContactList($conditions, $options);
+  $header = array(t('Id'), t('Peer'), t('Name'), t('Phone'), t('Options'));
   $rows = array();
   foreach ($contact_list as $contact) {
     $rows[] = array(
@@ -201,6 +229,7 @@ function telegram_manager_contact_list() {
       check_plain($contact->peer),
       check_plain($contact->name),
       check_plain($contact->phone),
+      l(t('view'), 'admin/config/telegram/manager/contact/' . $contact->oid),
     );
   }
   $build['data'] = array(
@@ -213,5 +242,31 @@ function telegram_manager_contact_list() {
     '#weight' => 5,
   );
   return $build;
+}
+
+/**
+ * Edit contact form.
+ */
+function telegram_manager_contact_form($form, &$form_state, $contact) {
+  $form_state['contact'] = $contact;
+  $form['name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Name'),
+    '#default_value' => $contact->name,
+  );
+  $form['phone'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Phone'),
+    '#default_value' => $contact->phone,
+  );
+  $form['submit'] = array('#type' => 'submit', '#value' => t('Save'));
+  return $form;
+}
+
+/**
+ * Edit contact. Form submission.
+ */
+function telegram_manager_contact_form_submit($form, &$form_state) {
+  drupal_set_message('NOT IMPLEMENTED');
 }
 
