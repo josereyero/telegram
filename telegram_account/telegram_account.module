@@ -13,9 +13,19 @@ use Drupal\telegram\TelegramMessage;
 function telegram_account_menu() {
   $items['user/%user/edit/telegram'] = array(
     'title' => 'Telegram',
-    'page callback' => 'telegram_account_contact_page',
+    'page callback' => 'telegram_account_edit_page',
     'page arguments' => array(1),
-    'access callback' => 'telegram_account_access',
+    'access callback' => 'telegram_account_edit_access',
+    'access arguments' => array(1),
+    'file' => 'telegram_account.pages.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
+  $items['user/%user/telegram'] = array(
+    'title' => 'Telegram',
+    'description' => 'Send Telegram message to user with Telegram',
+    'page callback' => 'telegram_account_send_page',
+    'page arguments' => array(1),
+    'access callback' => 'telegram_account_send_access',
     'access arguments' => array(1),
     'file' => 'telegram_account.pages.inc',
     'type' => MENU_LOCAL_TASK,
@@ -29,11 +39,37 @@ function telegram_account_menu() {
  * @return
  *   Boolean TRUE if the current user has access.
  */
-function telegram_account_access($account) {
+function telegram_account_edit_access($account) {
   global $user;
 
   return !empty($account->uid) && user_access('receive telegram notifications', $account) &&
     (user_edit_access($account) || user_access('manage telegram contacts'));
+}
+
+/**
+ * Access callback for the Telegram accounts page.
+ *
+ * @return
+ *   Boolean TRUE if the current user has access.
+ */
+function telegram_account_send_access($account) {
+  return !empty($account->uid) && user_access('receive telegram notifications', $account)
+    && !empty($account->telegram) && !empty($account->telegram->verified) &&
+     user_access('send telegram messages to users');
+}
+
+/**
+ * Implements hook_permission().
+ */
+function telegram_account_permission() {
+  return array(
+    'receive telegram notifications' =>  array(
+      'title' => t('Receive Telegram notifications'),
+    ),
+    'send telegram messages to users' =>  array(
+      'title' => t('Receive Telegram notifications'),
+    ),
+  );
 }
 
 /**

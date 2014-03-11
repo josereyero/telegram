@@ -1,9 +1,9 @@
 <?php
 
 /**
- * User account page.
+ * User account edit page.
  */
-function telegram_account_contact_page($account) {
+function telegram_account_edit_page($account) {
   return drupal_get_form('telegram_account_contact_form', $account);
 }
 
@@ -119,4 +119,41 @@ function telegram_account_contact_form_submit($form, &$form_state) {
       break;
   }
 }
+
+/**
+ * User account edit page.
+ */
+function telegram_account_send_page($account) {
+  drupal_set_title('Send telegram message to @name', array('@name' => $account->name));
+  return drupal_get_form('telegram_account_send_form', $account);
+}
+
+/**
+ * Message send form
+ */
+function telegram_account_send_form($form, $form_state, $account) {
+  $form_state['account'] = $account;
+  $form['text'] = array(
+    '#title' => t('Message'),
+    '#type' => 'textarea',
+    '#default_value' => '',
+    '#required' => TRUE,
+  );
+
+  $form['send'] = array('#type' => 'submit', '#value' => t('Send'));
+
+  return $form;
+}
+
+/**
+ * Message send form
+ */
+function telegram_account_send_form_submit($form, $form_state) {
+  $account = $form_state['account'];
+  if (!empty($account->telegram)) {
+    $result = telegram_manager()->sendMessage($account->telegram->peer, $form_state['values']['text']);
+    drupal_set_message(t('Your message has been queued for delivery.'));
+  }
+}
+
 

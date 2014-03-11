@@ -177,7 +177,7 @@ function telegram_manager_message_list($conditions = array(), $options = array()
     'limit' => 20,
   );
   $message_list = telegram_manager()->getMessages($conditions, $options);
-  $header = array(t('Id'), t('Date'), t('Peer'), t('Type'), t('Message'), t('Options'));
+  $header = array(t('Id'), t('Date'), t('Peer'), t('Type'), t('Message'), t('Status'), t('Options'));
   $rows = array();
   foreach ($message_list as $message) {
     $rows[] = array(
@@ -186,6 +186,7 @@ function telegram_manager_message_list($conditions = array(), $options = array()
       check_plain($message->peer),
       check_plain($message->direction),
       check_plain($message->text),
+      $message->status,
       l(t('view'), 'admin/config/telegram/manager/message/' . $message->oid),
     );
   }

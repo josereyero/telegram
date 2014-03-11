@@ -123,5 +123,7 @@ function telegram_manager_cron_queue_info() {
  * Queue worker callback
  */
 function telegram_manager_queue_worker($item) {
-  telegram_manager()->processJob($item);
+  $result = telegram_manager()->processJob($item);
 }
+
+
