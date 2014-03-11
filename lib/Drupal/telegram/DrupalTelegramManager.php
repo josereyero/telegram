@@ -320,7 +320,6 @@ class DrupalTelegramManager implements TelegramInterface {
    * Process queued work.
    */
   public function processJob($item) {
-    dpm($item);
     if ($this->getClient()->start()) {
       $params = $item->params;
       switch ($item->op) {
