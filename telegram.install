@@ -92,11 +92,12 @@ function telegram_schema() {
     'indexes' => array('peer' => array('peer'), 'phone' => array('phone'), 'idcontact' => array('idcontact')),
     'primary key' => array('oid'),
   );
+
   $schema['telegram_message'] = array(
     'description' => "Stores individual Telegram messages.",
     'fields' => array(
       'oid' => array(
-        'description' => 'The primary internal identifier for a message.',
+        'description' => 'The primary internal identifier for a dialog.',
         'type' => 'serial',
         'unsigned' => TRUE,
         'not null' => TRUE,
@@ -171,7 +172,13 @@ function telegram_schema() {
         'default' => 0,
       ),
       'updated' => array(
-        'description' => "A UNIX timestamp marking the date Telegram contacts were last fetched on.",
+        'description' => "A UNIX timestamp marking when this row was updated.",
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'readtime' => array(
+        'description' => "A UNIX timestamp marking when the message was read.",
         'type' => 'int',
         'not null' => TRUE,
         'default' => 0,
@@ -180,6 +187,59 @@ function telegram_schema() {
     'indexes' => array('peer' => array('peer'), 'idmsg' => array('idmsg')),
     'primary key' => array('oid'),
   );
+
+  $schema['telegram_dialog'] = array(
+    'description' => "Stores individual Telegram messages.",
+    'fields' => array(
+      'oid' => array(
+        'description' => 'The primary internal identifier for a message.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'idcontact' => array(
+        'description' => "Telegram unique identifier for each {telegram_contact}.",
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+      ),
+      'peer' => array(
+        'description' => "Name of the {telegram_contact} peer.",
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'name' => array(
+        'description' => "Name of the {telegram_contact}.",
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'unread' => array(
+        'description' => "The number of unread messages",
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'created' => array(
+        'description' => "A UNIX timestamp indicated when the message was created.",
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'updated' => array(
+        'description' => "A UNIX timestamp marking when this row was updated.",
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('oid'),
+  );
+
   return $schema;
 }
 

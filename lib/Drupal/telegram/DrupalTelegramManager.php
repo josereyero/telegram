@@ -7,12 +7,14 @@
 
 namespace Drupal\telegram;
 
+use \DrupalQueue;
+
 /**
  * Drupal Telegram Manager
  *
  * Manages all Telegram objects.
  */
-class DrupalTelegramManager {
+class DrupalTelegramManager implements TelegramInterface {
   /**
    * @var DrupalTelegramClient
    */
@@ -51,14 +53,6 @@ class DrupalTelegramManager {
   }
 
   /**
-   * Get contact for user account.
-   */
-  function getUserContact($account) {
-    $contacts = $this->getStorage()->contactLoadMultiple(array('uid' => $account->uid));
-    return reset($contacts);
-  }
-
-  /**
    * Get contact for phone.
    */
   function getContactByPhone($phone) {
@@ -76,39 +70,6 @@ class DrupalTelegramManager {
   }
 
   /**
-   * Create contact from user account.
-   *
-   * @todo Create better names from user accounts.
-   */
-  function createUserContact($account, $phone) {
-    // Check for existing contact first.
-    $contact = $this->getContactByPhone($phone);
-
-    if (!$contact) {
-      $first_name = 'Drupal';
-      $last_name = 'User' . $account->uid;
-      $contact = new TelegramContact(array(
-        'uid' => $account->uid,
-        'source' => 'drupal',
-        'phone' => $phone,
-        'name' => $first_name . ' ' . $last_name,
-        'peer' => $first_name . '_' . $last_name,
-      ));
-      // Add telegram contact if newly created.
-      $result = $this->getClient()->addContact($phone, $first_name, $last_name);
-    }
-    $contact->uid = $account->uid;
-    $contact->verified = 0;
-    $code = $contact->getVerificationCode(TRUE);
-
-    //$contact->status = $result ? TelegramContact::STATUS_DONE : TelegramContact::STATUS_ERROR;
-
-    $this->saveContact($contact);
-
-    return $contact;
-  }
-
-  /**
    * Remove contact from user account.
    */
   function removeUserContact($account) {
@@ -119,33 +80,31 @@ class DrupalTelegramManager {
   }
 
   /**
-   * Create and send verification code.
+   * Create contact (queue job).
+   *
+   * @param array $data
+   *   Contact data that must contain at least 'phone', 'first_name', 'last_name'
    */
-  function sendVerification($contact, $recreate = FALSE) {
-    $code = $contact->getVerificationCode($recreate);
-    if ($recreate) {
-      $this->saveContact($contact);
-    }
-    $text = t('Your @site-name verification code is: @code', array(
-      '@site-name' => variable_get('site_name'),
-      '@code' => $code,
-    ));
-    $message = new TelegramMessage(array('text' => $text));
-    $message->setContact($contact);
-    return $this->sendMessage($message);
+  function contactCreate($data) {
+    $contact = new TelegramContact($data);
+    $this->saveContact($contact);
+    $this->queueJob('contact create', $contact, array($data['phone'], $data['first_name'], $data['last_name']));
+    return $contact;
   }
 
   /**
-   * Check verification code.
+   * Update contact (queue job).
+   *
+   * @param TelegramContact $contact
+   *
+   * @param array $data
+   *   Contact data that must contain at least 'first_name', 'last_name'
    */
-  function verifyContact($contact, $code) {
-    if ($contact->getVerificationCode() === $code) {
-      $contact->verified = 1;
-      $this->saveContact($contact);
-      return TRUE;
-    }
-    else {
-      return FALSE;
+  function contactUpdate($contact, $data) {
+    if (isset($data['first_name']) && isset($data['last_name'])) {
+      $peer = $contact->getPeer();
+      $contact->setFullName($data['first_name'], $data['last_name']);
+
     }
   }
 
@@ -186,46 +145,63 @@ class DrupalTelegramManager {
   }
 
   /**
-   * Send message.
+   * Send message (immediate sending).
    *
    * @param DrupalTelegramMessage $message
    */
-  function sendMessage($peer, $text) {
-    if ($contact = $this->getContactByName($peer)) {
-      return $this->sendToContact($contact, $text);
+  function postMessage($message) {
+    $result = $this->getClient()->sendMessage($message->peer, $message->text);
+    // @todo Handle return and error conditions
+    if ($result) {
+      $message->sent = REQUEST_TIME;
+      $message->status = TelegramMessage::STATUS_DONE;
+      $this->saveMessage($message);
+      watchdog('telegram', 'Telegram message @number has been sent', array('@number' => $message->oid));
     }
     else {
-      return FALSE;
+      $message->status = TelegramMessage::STATUS_ERROR;
+      $this->saveMessage($message);
+      watchdog('telegram', 'Telegram message @number cannot be sent', array('@number' => $message->oid), WATCHDOG_ERROR);
     }
+    return $result;
   }
 
   /**
-   * Send message to contact.
+   * Queue message for delivery.
    */
-  function sendToContact($contact, $text) {
-    $result = $this->getClient()->sendMessage($contact->peer, $text);
-    $message = new TelegramMessage(array(
-      'text' => $text,
-      'type' => 'outgoing',
-    ));
-    $message->setDestination($contact);
-    if ($result) {
-      $message->sent = REQUEST_TIME;
-      $message->status = $message::STATUS_DONE;
-    }
-    else {
-      $message->status = $message::STATUS_ERROR;
-    }
-    $this->getStorage()->messageSave($message);
-    return $message;
+  function queueMessage($message) {
+   $message->direction = 'outgoing';
+   $message->source = 'drupal';
+   $message->status = TelegramMessage::STATUS_PENDING;
+   $this->saveMessage($message);
+   $this->queueJob('message send', $message);
+   return $message;
   }
 
+  /**
+   * Queue work to do on next connection.
+   */
+  function queueJob($op, $object, $params = array()) {
+    $queue = DrupalQueue::get('telegram_manager');
+    return $queue->createItem((object)array(
+      'op' => $op,
+      'object' => $object,
+      'params' => $params,
+    ));
+  }
 
   /**
    * Get contact list.
    */
-  function getContactList($conditions = array(), $options = array()) {
+  function getContacts($conditions = array(), $options = array()) {
     return $this->getStorage()->contactLoadMultiple($conditions, $options);
+  }
+
+  /**
+   * Get message list.
+   */
+  function getMessages($conditions = array(), $options = array()) {
+    return $this->getStorage()->messageLoadMultiple($conditions, $options);
   }
 
   /**
@@ -257,13 +233,6 @@ class DrupalTelegramManager {
         $this->contacts[] = $contact;
       }
     }
-  }
-
-  /**
-   * Get message list.
-   */
-  function getMessageList($conditions = array(), $options = array()) {
-    return $this->getStorage()->messageLoadMultiple($conditions, $options);
   }
 
   /**
@@ -331,13 +300,11 @@ class DrupalTelegramManager {
    *
    * @todo Get proper objects from TelegramClient.
    */
-  function readNewMessages() {
-    $list = $this->getNewMessages();
+  function readNewMessages($limit = 0) {
+    $list = $this->readMessages($limit);
     foreach ($list as $index => $message) {
-      $message = new TelegramMessage($message);
       $message->type = 'incoming';
-      $this->getStorage()->messageSave($message);
-      $list[$index] = $message;
+      $this-saveMessage($message);
     }
     return $list;
   }
@@ -350,6 +317,121 @@ class DrupalTelegramManager {
   }
 
   /**
+   * Process queued work.
+   */
+  public function processJob($item) {
+    dpm($item);
+    if ($this->getClient()->start()) {
+      $params = $item->params;
+      switch ($item->op) {
+        case 'message send':
+          return $this->postMessage($item->object);
+        case 'contact create':
+          $result = $this->getClient()->addContact($params['phone'], $params['first_name'], $params['last_name']);
+          break;
+        case 'contact rename':
+          $result = $this->getClient()->renameContact($params['peer'], $params['first_name'], $params['last_name']);
+          break;
+      }
+    }
+    else {
+      watchdog('telegram', 'Cannot start telegram client', array(), WATCHDOG_ERROR);
+      return FALSE;
+    }
+  }
+
+  /**
+   * Implements DrupalTelegramInterface::start()
+   */
+  public function start() {
+    return TRUE;
+  }
+
+  /**
+   * Implements DrupalTelegramInterface::stop()
+   */
+  public function stop() {
+    return TRUE;
+  }
+
+  /**
+   * Implements DrupalTelegramInterface::getContactList()
+   */
+  public function sendMessage($peer, $text) {
+    if ($contact = $this->getContactByName($peer)) {
+      $message = new TelegramMessage(array(
+        'source' => 'drupal',
+        'text' => $text,
+        'direction' => 'outgoing',
+      ));
+      $message->setDestination($contact);
+      return $this->queueMessage($message);
+    }
+    else {
+      return FALSE;
+    }
+  }
+
+  /**
+   * Implements DrupalTelegramInterface::getContactList()
+   */
+  function getContactList() {
+    return $this->getContacts();
+  }
+
+  /**
+   * Implements DrupalTelegramInterface::getContactList()
+   */
+  public function getDialogList() {
+    // @todo How to implement this ??
+    return array();
+  }
+
+  /**
+   * Implements DrupalTelegramInterface::addContact()
+   */
+  public function addContact($phone, $first_name, $last_name) {
+    return contactCreate(array(
+      'phone' => $phone,
+      'first_name' => $first_name,
+      'last_name' => $last_name,
+    ));
+  }
+
+  /**
+   * Implements DrupalTelegramInterface::renameContact()
+   */
+  public function renameContact($peer, $first_name, $last_name) {
+    if ($contact = $this->getContactByName($peer)) {
+      $name = trim($first_name) . '_' . trim($last_name);
+      return contactUpdate($contact, array(
+        'peer' => $peer,
+        'first_name' => $first_name,
+        'last_name' => $last_name,
+      ));
+    }
+  }
+
+  /**
+   * Implements DrupalTelegramInterface::getHistory()
+   */
+  public function getHistory($peer, $limit = 40) {
+    return $this->getMessages(array('peer' => $peer), array(
+      'order' => array('created' => 'DESC'),
+      'limit' => $limit,
+    ));
+  }
+
+  /**
+   * Implements DrupalTelegramInterface::markAsRead()
+   */
+  public function markAsRead($peer) {
+    return $this->getStorage()->messageUpdate(array('peer' => $peer), array('readtime' => REQUEST_TIME));
+  }
+
+
+
+  /**
    * Magic destruct. No need for explicit closing.
    */
   public function __destruct() {
@@ -357,4 +439,5 @@ class DrupalTelegramManager {
     unset($this->client);
     unset($this->storage);
   }
+
 }

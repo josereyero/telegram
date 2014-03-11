@@ -51,6 +51,13 @@ class DrupalTelegramStorage {
   }
 
   /**
+   * Update multiple messages.
+   */
+  function contactUpdate($conditions, $updates) {
+    return $this->updateMultiple('telegram_contact', $conditions, $updates);
+  }
+
+  /**
    * Load single contact
    */
   function messageLoad($oid) {
@@ -74,7 +81,6 @@ class DrupalTelegramStorage {
    */
   function messageSave($contact) {
     return $this->save('telegram_message', $contact);
-
   }
 
   /**
@@ -89,6 +95,13 @@ class DrupalTelegramStorage {
    */
   function messageDeleteAll($conditions = array()) {
     return $this->deleteMultiple('telegram_message', $conditions);
+  }
+
+  /**
+   * Update multiple messages.
+   */
+  function messageUpdate($conditions, $updates) {
+    return $this->updateMultiple('telegram_message', $conditions, $updates);
   }
 
   /**
@@ -135,6 +148,18 @@ class DrupalTelegramStorage {
    */
   protected function deleteMultiple($table, $conditions) {
     $query = db_delete($table);
+    foreach ($conditions as $field => $value) {
+      $query->condition($field, $value);
+    }
+    return $query->execute();
+  }
+
+  /**
+   * Update multiple objects.
+   */
+  protected function updateMultiple($table, $conditions, $fields) {
+    $query = db_update($table);
+    $query->fields($fields);
     foreach ($conditions as $field => $value) {
       $query->condition($field, $value);
     }

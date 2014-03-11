@@ -42,28 +42,18 @@ function telegram_manager_send_form_submit($form, &$form_state) {
   if ($to && $text) {
     drupal_set_message(t('Sending'));
     if (is_numeric($to)) {
-      if ($contact = $telegram->getContactByPhone($to)) {
-        $result = $telegram->sendToContact($contact, $text);
-      }
-      else {
-        drupal_set_message('Contact not found', 'error');
-      }
+      $contact = $telegram->getContactByPhone($to);
     }
     else {
-      if ($contact = $telegram->getContactByName($to)) {
-        $result = $telegram->sendToContact($contact, $text);
-      }
-      else {
-        drupal_set_message('Contact not found', 'error');
-      }
+      $contact = $telegram->getContactByName($to);
     }
-    if ($result) {
+    if (!empty($contact)) {
+      $result = $telegram->sendMessage($contact->peer, $text);
       drupal_set_message(t('Your message has been queued for delivery.'));
     }
+
     $form_state['rebuild'] = TRUE;
   }
-
-
 }
 
 /**
@@ -186,7 +176,7 @@ function telegram_manager_message_list($conditions = array(), $options = array()
     'order' => array('created' => 'DESC'),
     'limit' => 20,
   );
-  $message_list = telegram_manager()->getMessageList($conditions, $options);
+  $message_list = telegram_manager()->getMessages($conditions, $options);
   $header = array(t('Id'), t('Date'), t('Peer'), t('Type'), t('Message'), t('Options'));
   $rows = array();
   foreach ($message_list as $message) {
@@ -220,7 +210,7 @@ function telegram_manager_contact_list($conditions = array(), $options = array()
     'order' => array('name' => 'ASC'),
     'limit' => 20,
   );
-  $contact_list = telegram_manager()->getContactList($conditions, $options);
+  $contact_list = telegram_manager()->getContacts($conditions, $options);
   $header = array(t('Id'), t('Peer'), t('Name'), t('Phone'), t('Options'));
   $rows = array();
   foreach ($contact_list as $contact) {

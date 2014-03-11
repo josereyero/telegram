@@ -5,6 +5,8 @@
  * Telegram account module
  */
 
+use Drupal\telegram\TelegramMessage;
+
 /**
  * Implements hook_menu().
  */
@@ -38,8 +40,7 @@ function telegram_account_access($account) {
  * Implements hook_user_load().
  */
 function telegram_account_user_load($users) {
-  return;
-  $contacts = telegram_manager()->getStorage()->contactLoadMultiple(array('uid' => array_keys($users)));
+  $contacts = telegram_manager()->getContacts(array('uid' => array_keys($users)));
   foreach ($contacts as $contact) {
     $users[$contact->uid]->telegram = $contact;
   }
@@ -49,7 +50,77 @@ function telegram_account_user_load($users) {
  * Implements hook_user_view() {
  */
 function telegram_account_user_view($account, $view_mode, $langcode) {
-  if (user_access('')) {
 
+}
+
+/**
+ * Create new contact from user account.
+ *
+ * @param object $account
+ *   User account to create contact for.
+ * @param string $phone
+ *   Phone number
+ *
+ * @return TelegramContact
+ */
+function telegram_account_create_contact($account, $phone) {
+  $telegram = telegram_manager();
+  // @todo find better default name
+  $first_name = 'Drupal';
+  $last_name = 'User' . $account->uid;
+
+  // Check for existing contact first.
+  $contact = $telegram->getContactByPhone($phone);
+  if ($contact) {
+    // Assign contact to new user.
+    $contact->uid = $account->uid;
+    drupal_set_message(t('Assigning existing Telegram contact to user.'));
+  }
+  if (!$contact) {
+    $contact = $telegram->contactCreate(array(
+      'phone' => $phone,
+      'first_name' => $first_name,
+      'last_name' => $last_name,
+      'uid' => $account->uid,
+    ));
+  }
+  // At this point we have a contact oid, and it may be scheduled on telegram for creation.
+  $telegram->saveContact($contact);
+
+  return $contact;
+}
+
+/**
+ * Send verification message for telegram account.
+ */
+function telegram_account_send_verification($contact) {
+    $telegram = telegram_manager();
+
+    $contact->verified = 0;
+    $contact->verification = (string)mt_rand(100000, 999999);
+    $telegram->saveContact($contact);
+
+    $text = t('Your @site-name verification code is: @code', array(
+      '@site-name' => variable_get('site_name'),
+      '@code' => $contact->verification,
+    ));
+    $message = new TelegramMessage(array('text' => $text));
+    $message->setDestination($contact);
+
+    // Should we send this one without queueing?
+    return $telegram->queueMessage($message);
+}
+
+/**
+ * Verify contact with code.
+ */
+function telegram_account_verify_contact($contact, $code) {
+  if ($contact->verification === $code) {
+    $contact->verified = 1;
+    telegram_manager()->saveContact($contact);
+    return TRUE;
+  }
+  else {
+    return FALSE;
   }
 }

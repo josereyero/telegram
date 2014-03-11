@@ -86,28 +86,31 @@ function telegram_account_contact_form_validate($form, &$form_state) {
 function telegram_account_contact_form_submit($form, &$form_state) {
   $account = $form_state['account'];
   $contact = isset($account->telegram) ? $account->telegram : NULL;
+  $telegram = telegram_manager();
 
   switch ($form_state['values']['op']) {
     case t('Delete'):
-      telegram_manager()->removeUserContact($account);
+      $contact->uid = 0;
+      $contact->verified = 0;
+      $telegram->saveContact($contact);
       drupal_set_message(t('The telegram contact has been deleted'));
       break;
 
     case t('Resend verification code');
-      telegram_manager()->sendVerification($contact, TRUE);
+      telegram_account_send_verification($contact);
       drupal_set_message(t('A new verification code has been sent.'));
       break;
 
     case t('Submit'):
       if (isset($form_state['values']['phone'])) {
-        $contact = telegram_manager()->createUserContact($account, $form_state['values']['phone']);
-        telegram_manager()->sendVerification($contact);
+        $contact = telegram_account_create_contact($account, $form_state['values']['phone']);
+        telegram_account_send_verification($contact);
         drupal_set_message(t('The telephone has been saved and a verification code has been sent.'));
       }
       break;
 
     case t('Verify phone'):
-      if (telegram_manager()->verifyContact($contact, $form_state['values']['verify'])) {
+      if (telegram_account_verify_contact($contact, $form_state['values']['verify'])) {
         drupal_set_message(t('Your phone number has been verified.'));
       }
       else {

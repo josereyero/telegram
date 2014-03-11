@@ -96,4 +96,32 @@ function telegram_manager_contact_load($oid) {
   return reset($contacts);
 }
 
+/**
+ * Implements hook_cron().
+ */
+function telegram_manager_cron() {
+  // Read incoming messages and store.
+  if (telegram_client()->start()) {
+    telegram_manager()->readNewMessages(100);
+  }
+}
 
+/**
+ * Implements hook_cron_queue_info()
+ */
+function telegram_manager_cron_queue_info() {
+  $queues['telegram_manager'] = array(
+    'worker callback' => 'telegram_manager_queue_worker',
+    // Max runtime per cron run.
+    'time' => 30,
+  );
+
+  return $queues;
+}
+
+/**
+ * Queue worker callback
+ */
+function telegram_manager_queue_worker($item) {
+  telegram_manager()->processJob($item);
+}
