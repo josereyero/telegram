@@ -90,6 +90,19 @@ function telegram_account_user_view($account, $view_mode, $langcode) {
 }
 
 /**
+ * Get contact for user account only if its a verified contact.
+ *
+ * @param object $account
+ *   User account, or none for current user.
+ *
+ * @return TelegramContact|NULL
+ */
+function telegram_account_get_contact($account = NULL) {
+  $account = $account ? $account : $GLOBALS['user'];
+  return !empty($account->telegram) && !empty($account->telegram->verified) ? $account->telegram : NULL;
+}
+
+/**
  * Create new contact from user account.
  *
  * @param object $account

@@ -1,0 +1,225 @@
+<?php
+/**
+ * @file
+ * Exposes Drupal actions for sending Telegram messages.
+ *
+ * This module is based on Twitter Actions module, lots of copy & paste...
+ */
+
+/**
+ * Implements hook_action_info().
+ */
+function telegram_actions_action_info() {
+  return array(
+    'telegram_actions_send_message_action' => array(
+      'type' => 'system',
+      'label' => t('Post a message to Telegram'),
+      'configurable' => TRUE,
+      'triggers' => array(
+        'node_view',
+        'node_insert',
+        'node_update',
+        'node_delete',
+        'comment_view',
+        'comment_insert',
+        'comment_update',
+        'comment_delete',
+        'user_view',
+        'user_insert',
+        'user_update',
+        'user_delete',
+        'user_login',
+        'cron',
+      ),
+    ),
+  );
+}
+
+/**
+ * Returns a form definition so the Telegram action can be configured.
+ *
+ * @param array $context
+ *   Default values (if we are editing an existing action instance).
+ * @return
+ *   Form definition.
+ */
+function telegram_actions_send_message_action_form($context) {
+  $options = telegram_actions_account_options();
+  // Set default values for form.
+  $form['peer_name'] = array(
+    '#type' => 'select',
+    '#title' => t('Telegram account name'),
+    '#description' => t('Telegram account which will be used. ' .
+      'By selecting [current user] the rule will check if the user ' .
+      'has authenticated a Telegram account to use.'),
+    '#options' => $options,
+    '#default_value' => isset($context['peer_name']) ? $context['peer_name'] : '',
+    '#required' => TRUE,
+  );
+
+  $form['message'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Message'),
+    '#default_value' => isset($context['message']) ? $context['message'] : '',
+    '#cols' => '80',
+    '#rows' => '3',
+    '#description' => t('The message that should be sent. You may include the following variables: ' .
+                        '%site_name, %username, %node_url, %node_type, %title, %summary, %body. ' .
+                        'Not all variables will be available in all contexts.'),
+    '#required' => TRUE,
+  );
+
+  return $form;
+}
+
+/**
+ * Returns a list of authenticated Telegram accounts to be used as options.
+ *
+ * @return
+ *   array of peer_name => peer_name entries.
+ */
+function telegram_actions_account_options() {
+  $telegram = telegram_instance();
+  $telegram_accounts = $telegram->getContactList();
+  $options = array();
+  foreach ($telegram_accounts as $contact) {
+    $options[$contact->peer] = $contact->name;
+  }
+  // Extra token to use current user's account.
+  $options['[current user]'] = '[current user]';
+  return $options;
+}
+
+/**
+ * Submits the form and sets the telegram account pulling the data from the
+ * telegram_account table.
+ */
+function telegram_actions_send_message_action_submit($form, $form_state) {
+  $form_values = $form_state['values'];
+  // Process the HTML form to store configuration. The keyed array that
+  // we return will be serialized to the database.
+  $params = array(
+    'peer_name' => $form_values['peer_name'],
+    'message' => $form_values['message'],
+  );
+
+  return $params;
+}
+
+/**
+ * Validates the Telegram account to use to send a message.
+ *
+ * If it is a Telegram account, it will check it still exists.
+ * If it is [current user], it will see if the current user has an
+ * authenticated Telegram account to use.
+ *
+ * @param string $peer_name
+ *   The selected value that represents a Telegram account to use.
+ * @return string
+ *   The real peer name
+ */
+function _telegram_actions_get_telegram_peer($peer_name) {
+  // Find out the Telegram peer to use.
+  if ($peer_name == '[current user]') {
+    // Check if this user has an authenticated account.
+    if ($contact = telegram_account_get_contact()) {
+      return $contact->peer;
+    }
+    else {
+      return NULL;
+    }
+
+  }
+  return $peer_name;
+}
+
+/**
+ * Implementation of a configurable Telegram action.
+ * @todo Implementation for language negotiation for the body and sumary. Also
+ * need implementation for bodies with multiple values. Right now it is hard
+ * coded and it will only get body and summary for 'und' language and only
+ * the first value of the body field.
+ * If the final message is over 140 chars, there is no feedback to the user.
+ */
+function telegram_actions_send_message_action($object, $context) {
+  $telegram_peer = _telegram_actions_get_telegram_peer($context['peer_name']);
+  if ($telegram_peer) {
+    global $user;
+    $variables['%site_name'] = variable_get('site_name', 'Drupal');
+    // Seting variables array depending on action's group
+    switch ($context['group']) {
+      case 'node':
+        $node = $context['node'];
+        if (isset($node)) {
+          $variables = array_merge($variables, array(
+            '%uid' => $node->uid,
+            '%username' => $node->name,
+            '%node_url' => url('node/' . $node->nid, array('absolute' => TRUE)),
+            '%node_type' => node_type_get_name($node),
+            '%title' => $node->title,
+            '%summary' => isset($node->body['und'][0]['value']) ? $node->body['und'][0]['summary'] : '',
+            '%body' => isset($node->body['und'][0]['value']) ? $node->body['und'][0]['value'] : '',
+            )
+          );
+        }
+        break;
+
+      case 'comment':
+        $node = node_load($context['comment']->nid);
+        if (isset($node)) {
+          $variables = array_merge($variables, array(
+            '%uid' => $context['comment']->uid,
+            '%username' => $context['comment']->name,
+            '%node_url' => url('node/' . $node->nid, array('absolute' => TRUE)),
+            '%node_type' => node_type_get_name($node),
+            '%title' => $node->title,
+            '%summary' => isset($node->body[LANGUAGE_NONE][0]['value']) ? $node->body['und'][0]['summary'] : '',
+            '%body' => isset($node->body[LANGUAGE_NONE][0]['value']) ? $node->body['und'][0]['value'] : '',
+            )
+          );
+        }
+        break;
+
+      case 'user':
+        $variables['%username'] = $context['user']->name;
+        break;
+
+      case 'cron':
+        break;
+
+      default:
+        // We are being called directly.
+        $node = $object;
+        if (isset($node)  && is_object($node)) {
+          $variables = array_merge($variables, array(
+            '%uid' => $node->uid,
+            '%username' => $node->name,
+            '%node_url' => url('node/' . $node->nid, array('absolute' => TRUE)),
+            '%node_type' => node_type_get_name($node),
+            '%title' => $node->title,
+            '%summary' => isset($node->body[LANGUAGE_NONE][0]['value']) ? $node->body['und'][0]['summary'] : '',
+            '%body' => isset($node->body[LANGUAGE_NONE][0]['value']) ? $node->body['und'][0]['value'] : '',
+            )
+          );
+        }
+    }
+
+    // Send the message.
+    $message = strtr($context['message'], $variables);
+    try {
+      telegram_actions_send_message($telegram_peer, $message);
+      drupal_set_message(t('Successfully posted to Telegram'));
+    }
+    catch (TelegramException $e) {
+      drupal_set_message(t('An error occurred when posting to Telegram: @message',
+                           array('@message' => $e->getMessage())), 'warning');
+    }
+  }
+}
+
+/**
+ * Send message
+ */
+function telegram_actions_send_message($peer, $message) {
+  telegram_instance()->sendMessage($peer, $message);
+}

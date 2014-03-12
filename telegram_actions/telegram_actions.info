@@ -1,0 +1,6 @@
+name = Telegram actions (Untested)
+description = Exposes Drupal actions to send Telegram messages.
+core = 7.x
+dependencies[] = telegram
+dependencies[] = telegram_account
+
