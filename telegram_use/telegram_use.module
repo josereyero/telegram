@@ -1,0 +1,228 @@
+<?php
+/**
+ * @file
+ * Drupal module: Telegram
+ *
+ * Experimental development, guess what...
+ *
+ * By Jose Manuel Guerrero & Jose Reyero
+ *
+ * http://reyero.net
+ * http://jmanuelguerrero.com
+ */
+
+use Drupal\telegram\DrupalTelegramClient;
+use Drupal\telegram\DrupalTelegramStorage;
+use Drupal\telegram\DrupalTelegramManager;
+
+/**
+ * Implements hook_menu().
+ */
+function telegram_use_menu() {
+   $items['telegram/contactlist'] = array(
+     'title' => 'Telegram contact list',
+     'access arguments' => array('administer site configuration'),
+     'page callback' => 'telegram_use_contactlist_page',
+     'access arguments' => array('telegram_use view contact list'),
+   );
+   
+      $items['telegram/readmessages'] = array(
+     'title' => 'Messages',
+     'access arguments' => array('administer site configuration'),
+     'page callback' => 'telegram_use_read_messages_page',
+     'access arguments' => array('telegram_use read messages'),
+   );
+     
+   return $items;
+}
+   
+function telegram_use_contactlist_page(){
+	
+	$output = drupal_get_form('telegram_use_contact_list_form');
+	return $output;
+}
+
+function telegram_use_read_messages_page(){
+  $user = $_GET['user'];
+  $defaultresults = 5;
+  (isset($_GET['new'])) ?  $new = $_GET['new'] : $new = NULL;
+  $output['form1'] = drupal_get_form('telegram_use_read_messages_form', $user, $new, $defaultresults);
+  $output['form2'] = drupal_get_form('telegram_use_send_form', $user);
+  
+	return $output;
+}
+
+
+function telegram_use_contact_list_form($form, &$form_state) {
+  if (isset($form_state['output'])) {
+    $form['output'] = array(
+      '#type' => 'fieldset',
+      '#value' => 'output',
+    ) + $form_state['output'];
+  }
+
+  // Add contact list
+  $form['contacts'] = array(
+    '#title' => t('Contacts'),
+    '#type' => 'item',
+    '#markup' => telegram_use_contact_list(),
+  );
+
+  $form['send'] = array('#type' => 'submit', '#value' => t('Refresh'));
+
+  return $form;
+}
+
+/**
+ * Test form submit.
+ */
+
+function telegram_use_contact_list_form_submit($form, &$form_state) {
+  $client = telegram_client();
+  $client->getContactList();
+  $form_state['rebuild'] = TRUE;
+}
+
+function telegram_use_read_messages_form($form, &$form_state, $user, $new = NULL, $defaultresults) {
+  if (isset($form_state['output'])) {
+    $form['output'] = array(
+      '#type' => 'fieldset',
+      '#value' => 'output',
+    ) + $form_state['output'];
+  }
+  $form['numbermessages'] = array(
+  		'#type' => 'select',
+  		'#title' => 'N. Messages',
+  		'#default_value' => $defaultresults,
+  		'#options' => Array
+  		(
+  				'5' => 5,
+  				'10' => 10,
+  				'15' => 15,
+  				'20' => 20,
+  				'25' => 25,
+  				'30' => 30,
+  				'35' => 35,
+  				'40' => 40,
+  				'45' => 45,
+  				'50' => 50,
+  				'55' => 55,
+  				'60' => 60,
+  				'65' => 65,
+  				'70' => 70,
+  				'75' => 75,
+  				'80' => 80,
+  				'85' => 85,
+  				'90' => 90,
+  				'95' => 95,
+  				'100' => 100,
+  		)
+  );
+  
+  $form['view'] = array('#type' => 'submit', '#value' => t('View'));
+  isset($new) ? $newmessages = $new : (isset($form_state['values']['numbermessages']) ? $newmessages = $form_state['values']['numbermessages'] : $newmessages = $defaultresults);
+    // Add list messages
+  $form['contacts'] = array(
+    '#title' => t('Messages'),
+    '#type' => 'item',
+    '#markup' => telegram_use_read_messages($user, $newmessages),
+  );
+  
+  return $form;
+}
+
+
+/**
+ * Send form submit.
+ */
+function telegram_use_read_messages_form_submit($form, &$form_state) {
+
+  $form_state['rebuild'] = TRUE;
+}
+
+
+/**
+ * Send form.
+ */
+function telegram_use_send_form($form, &$form_state, $user) {
+  if (isset($form_state['output'])) {
+    $form['output'] = array(
+      '#type' => 'fieldset',
+      '#value' => 'output',
+    ) + $form_state['output'];
+  }
+  $form['to'] = array(
+    '#title' => t('To'),
+    '#description' => t('Telegram user name or phone number.'),
+    '#type' => 'hidden',
+  	'#default_value' => $user,
+    '#size' => 20,
+  );
+  $form['text'] = array(
+    '#title' => t('Message'),
+    '#type' => 'textarea',
+    '#default_value' => 'Test Message',
+  );
+
+  $form['send'] = array('#type' => 'submit', '#value' => t('Send'));
+
+  return $form;
+}
+
+/**
+ * Send form submit.
+ */
+function telegram_use_send_form_submit($form, &$form_state) {
+  $client = telegram_client();
+  $to = $form_state['values']['to'];
+  $text = $form_state['values']['text'];
+  $result = $client->sendMessage($to, $text);
+  $output['result'] = $result;
+  $form_state['rebuild'] = TRUE;
+  $client->stop();
+}
+
+function telegram_use_contact_list() {
+  $unread_messages = telegram_client()->getDialogList();
+  $contact_list = telegram_client()->getContactList();
+  $header = array(t('Peer'), t('Name'), t('Phone'), t('Status'), t('Show messages'), t('Pending'));
+  $rows = array();
+  foreach ($contact_list as $contact) {
+  	foreach ($unread_messages as $u_messages)
+  	{
+  	  if ($u_messages->user == $contact->name)
+  	  {
+  	  	$unreadm = $u_messages->messages;
+  	  }
+  	  else 
+  	  {
+  	  	$unreadm = 0;
+  	  }
+  	}
+    $rows[] = array(
+      check_plain($contact->peer),
+      check_plain($contact->name),
+      check_plain($contact->phone),
+      check_plain($contact->status),
+      l('Show', 'telegram/readmessages', array('query' => array('user' => check_plain($contact->peer)))),
+      ($unreadm != 0) ? l(check_plain($unreadm), 'telegram/readmessages', array('query' => array('user' => check_plain($contact->peer), 'new' => $unreadm))): NULL,
+    );
+  }
+  return theme('table', array('header' => $header, 'rows' => $rows));
+}
+
+function telegram_use_read_messages($user, $new = NULL) {
+  (isset($new)) ? $markread = telegram_client()->markAsRead($user) :  NULL;
+  $read_messages = telegram_client()->getHistory($user, $new);
+  $header = array(t('Date'), t('Peer'), t('direction'), t('Message'));
+  $rows = array();
+  foreach ($read_messages as $message) {
+    $rows[] = array(
+      check_plain($message->date),
+      check_plain($message->peer),
+      check_plain($message->_direction),
+      check_plain($message->text)
+    );
+  }
+  return theme('table', array('header' => $header, 'rows' => $rows));
+}
