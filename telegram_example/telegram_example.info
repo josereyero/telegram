@@ -1,0 +1,6 @@
+name = Telegram Example
+description = Example module implementing some more Telegram Client features.
+core = 7.x
+package = Telegram
+dependencies[] = xautoload
+dependencies[] = telegram

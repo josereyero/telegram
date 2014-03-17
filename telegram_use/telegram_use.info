@@ -1,7 +1,0 @@
-name = Telegram_use
-description = Telegram_use
-core = 7.x
-package = Telegram
-dependencies[] = xautoload
-dependencies[] = variable
-dependencies[] = telegram
