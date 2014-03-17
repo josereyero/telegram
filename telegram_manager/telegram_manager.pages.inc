@@ -185,8 +185,8 @@ function telegram_manager_message_list($conditions = array(), $options = array()
       format_date($message->created),
       check_plain($message->peer),
       check_plain($message->direction),
-      check_plain($message->text),
-      $message->status,
+      check_plain(truncate_utf8($message->text, 40, TRUE, TRUE)),
+      $message->formatStatus(),
       l(t('view'), 'admin/config/telegram/manager/message/' . $message->oid),
     );
   }

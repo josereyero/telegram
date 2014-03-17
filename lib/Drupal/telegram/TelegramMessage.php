@@ -89,4 +89,29 @@ class TelegramMessage extends TelegramData {
     return $this;
   }
 
+  /**
+   * Get status list.
+   *
+   * @return array
+   *   List of possible status value with translated names.
+   */
+  public static function getStatusList() {
+    return array(
+      static::STATUS_DONE => t('Done'),
+      static::STATUS_PENDING => t('Pending'),
+      static::STATUS_ERROR => t('Error'),
+    );
+  }
+
+  /**
+   * Format message status.
+   *
+   * @return string
+   *   Message status name.
+   */
+  public function formatStatus() {
+    $list = $this->getStatusList();
+    return isset($this->status) && isset($list[$this->status]) ? $list[$this->status] : t('Unknown');
+  }
+
 }
