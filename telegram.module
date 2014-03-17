@@ -84,9 +84,7 @@ function telegram_send_peer($peer, $text) {
  *
  * This one will return client or manager depending on the enabled modules.
  *
- * @todo Add a proper TelegramInterface
- *
- * @return TelegramClient|TelegramManager
+ * @return Drupal\telegram\TelegramInterface
  */
 function telegram_instance() {
   return function_exists('telegram_manager') ? telegram_manager() : telegram_client();
@@ -95,7 +93,7 @@ function telegram_instance() {
 /**
  * Get Telegram client
  *
- * @return TelegramClient
+ * @return Drupal\telegram\TelegramClient
  */
 function telegram_client() {
   $telegram = &drupal_static('telegram');
@@ -110,7 +108,7 @@ function telegram_client() {
 /**
  * Get Telegram logger.
  *
- * @return TelegramLogger
+ * @return Drupal\telegram\TelegramLogger
  */
 function telegram_logger() {
   $telegram = &drupal_static('telegram');

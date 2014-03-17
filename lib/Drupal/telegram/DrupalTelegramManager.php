@@ -53,23 +53,6 @@ class DrupalTelegramManager implements TelegramInterface {
   }
 
   /**
-   * Get contact for phone.
-   */
-  function getContactByPhone($phone) {
-    $contacts = $this->getStorage()->contactLoadMultiple(array('phone' => $phone));
-    return reset($contacts);
-  }
-
-  /**
-   * Get contact by name / peer.
-   */
-  function getContactByName($name) {
-    $peer = TelegramContact::nameToPeer($name);
-    $contacts = $this->getStorage()->contactLoadMultiple(array('peer' => $peer));
-    return reset($contacts);
-  }
-
-  /**
    * Remove contact from user account.
    */
   function removeUserContact($account) {
@@ -376,6 +359,23 @@ class DrupalTelegramManager implements TelegramInterface {
    */
   function getContactList() {
     return $this->getContacts();
+  }
+
+  /**
+   * Implements TelegramInterface::getContactByName()
+   */
+  function getContactByName($name) {
+    $peer = TelegramContact::nameToPeer($name);
+    $contacts = $this->getStorage()->contactLoadMultiple(array('peer' => $peer));
+    return reset($contacts);
+  }
+
+  /**
+   * Implements TelegramInterface::getContactByPhone()
+   */
+  function getContactByPhone($phone) {
+    $contacts = $this->getStorage()->contactLoadMultiple(array('phone' => $phone));
+    return reset($contacts);
   }
 
   /**

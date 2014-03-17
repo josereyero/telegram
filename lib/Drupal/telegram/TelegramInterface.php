@@ -51,6 +51,28 @@ interface TelegramInterface {
   public function getContactList();
 
   /**
+   * Get contact by name
+   *
+   * @param string $name
+   *   Contact name (full name) like 'Jose Manuel Guerrero'
+   *
+   * @return Drupal/telegram/TelegramContact|NULL
+   *   Telegram contact with that name if found.
+   */
+  public function getContactByName($name);
+
+  /**
+   * Get contact by phone number.
+   *
+   * @param string $phone
+   *   Phone number, with country code but without '+' nor '00'
+   *
+   * @return Drupal/telegram/TelegramContact|NULL
+   *   Telegram contact with that phone if found.
+   */
+  public function getContactByPhone($phone);
+
+  /**
    * Get list of current dialogs.
    *
    * @todo Remove filters, just get dialog list

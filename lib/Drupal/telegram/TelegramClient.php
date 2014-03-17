@@ -198,7 +198,7 @@ class TelegramClient {
   	    1 => '/^real\s(name)\:\s([\w\s]+)$/u',
   	    2 => '/^(phone)\:\s(\d+)$/',
   	  );
-  	  $mapping = array('line', 'type', 'data');
+  	  $mapping = array('string', 'type', 'data');
   	  $info = $this->parseResponse($pattern, $mapping);
   	  // If we get user data, parse second stage.
   	  if ($info) {
@@ -213,7 +213,7 @@ class TelegramClient {
     	    4 => '/^(offline)\s\(was\sonline\s\[([\d\/]+)\s([\d\:]+)\]\)/',
     	  );
     	  $mapping = array(
-    	    0 => 'line',
+    	    0 => 'string',
     	    1 => 'status',
     	    2 => 'date',
     	    3 => 'time',

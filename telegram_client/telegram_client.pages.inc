@@ -130,7 +130,6 @@ function telegram_client_read_messages_form_submit($form, &$form_state) {
   $form_state['rebuild'] = TRUE;
 }
 
-
 /**
  * Print read messages .
  */

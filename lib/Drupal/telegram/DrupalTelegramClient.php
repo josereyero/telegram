@@ -14,7 +14,7 @@ namespace Drupal\telegram;
  *
  * It uses a locking mechanism to prevent starting more than one process.
  */
-class DrupalTelegramClient extends TelegramClient {
+class DrupalTelegramClient extends TelegramClient implements TelegramInterface {
 
   /**
    * Inbox, outbox.
@@ -30,9 +30,7 @@ class DrupalTelegramClient extends TelegramClient {
   protected $lock;
 
   /**
-   * Get peer name with phone number.
-   *
-   * @return Drupal/telegram/TelegramContact
+   * Implements TelegramInterface::getContactByPhone()
    */
   public function getContactByPhone($phone) {
     $contacts = $this->getContactList();
@@ -40,20 +38,11 @@ class DrupalTelegramClient extends TelegramClient {
   }
 
   /**
-   * Send message to phone number.
-   *
-   * @param string $phone
-   *   Phone number without '+' or '00'. Example 34123123123
-   *
-   * @return array|FALSE
+   * Implements TelegramInterface::getContactByName()
    */
-  public function sendToPhone($phone, $text) {
-    if ($contact = $this->getContactByPhone($phone)) {
-      return $this->sendMessage($contact->peer, $text);
-    }
-    else {
-      return FALSE;
-    }
+  function getContactByName($name) {
+    $peer = TelegramContact::nameToPeer($name);
+    return $this->getContactInfo($peer);
   }
 
   /**
@@ -62,22 +51,6 @@ class DrupalTelegramClient extends TelegramClient {
   public function getAllMessages() {
     $this->readMessages();
     return $this->inbox;
-  }
-
-  /**
-   * @todo Lower level methods to be implemented properly.
-   */
-
-  /**
-   * Send message to peer.
-   *
-   * @param string $peer
-   *   Peer name, like 'Jose_Reyero'
-   *
-   * @return array|FALSE
-   */
-  public function sendToPeer($peer, $message) {
-    return $this->sendMessage($peer, $message);
   }
 
   /**
