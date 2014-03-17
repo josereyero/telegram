@@ -31,6 +31,15 @@ function telegram_manager_menu() {
      'type' => MENU_DEFAULT_LOCAL_TASK,
      'weight' => -10,
    );
+   $items['admin/config/telegram/manager/message/%telegram_manager_message'] = array(
+     'title' => 'Message',
+     'description' => 'View message',
+     'page callback' => 'telegram_manager_message_page',
+     'page arguments' => array(5),
+     'access arguments' => array('administer site configuration'),
+     'file' => 'telegram_manager.pages.inc',
+     'type' => MENU_CALLBACK,
+   );
    $items['admin/config/telegram/manager/send'] = array(
      'title' => 'Send',
      'description' => 'Send message',
@@ -89,10 +98,24 @@ function telegram_manager() {
 }
 
 /**
- * Menu loader.
+ * Menu loader for contact.
+ *
+ * @param int $oid
+ *   Contact's object id.
  */
 function telegram_manager_contact_load($oid) {
-  $contacts = telegram_manager()->getContactList(array('oid' => $oid));
+  $contacts = telegram_manager()->getContacts(array('oid' => $oid));
+  return reset($contacts);
+}
+
+/**
+ * Menu loader for message.
+ *
+ * @param int $oid
+ *   Contact's object id.
+ */
+function telegram_manager_message_load($oid) {
+  $contacts = telegram_manager()->getMessages(array('oid' => $oid));
   return reset($contacts);
 }
 

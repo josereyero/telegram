@@ -66,7 +66,7 @@ function telegram_manager_contact_list_page() {
 }
 
 /**
- * Cotnact page.
+ * Contact page.
  */
 function telegram_manager_contact_page($contact) {
   $build['contact'] = array(
@@ -116,6 +116,54 @@ function telegram_manager_contact_list_form_submit($form, &$form_state) {
 function telegram_manager_message_list_page() {
   $build['form'] = drupal_get_form('telegram_manager_message_list_form');
   $build['content'] = telegram_manager_message_list();
+  return $build;
+}
+
+/**
+ * Message page.
+ */
+function telegram_manager_message_page($message) {
+  $build['message'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Telegram Message @id', array('@id' => $message->idmsg)),
+  );
+  $build['message']['type'] = array(
+    '#title' => t('Type'),
+    '#type' => 'item',
+    '#markup' => check_plain($message->direction),
+  );
+  $build['message']['status'] = array(
+    '#title' => t('Status'),
+    '#type' => 'item',
+    '#markup' => $message->formatStatus(),
+  );
+  $build['message']['peer'] = array(
+    '#title' => t('Peer'),
+    '#type' => 'item',
+    '#markup' => check_plain($message->peer),
+  );
+  $build['message']['created'] = array(
+    '#title' => t('Created'),
+    '#type' => 'item',
+    '#markup' => format_date($message->created),
+  );
+  $build['message']['sent'] = array(
+    '#title' => t('Sent'),
+    '#type' => 'item',
+    '#markup' => format_date($message->sent),
+  );
+  $build['message']['updated'] = array(
+    '#title' => t('Updated'),
+    '#type' => 'item',
+    '#markup' => format_date($message->updated),
+  );
+  $build['message']['text'] = array(
+    '#title' => t('Text'),
+    '#type' => 'item',
+    '#markup' => '<pre>' . check_plain($message->text) . '</pre>',
+  );
+
+
   return $build;
 }
 /**
