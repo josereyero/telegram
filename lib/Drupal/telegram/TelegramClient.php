@@ -159,9 +159,9 @@ class TelegramClient {
   /**
    * Rename contact
    *
-  * @param string $peer
-  *   Peer name or contact name with spaces replaced by '_'
-  *
+   * @param string $peer
+   *   Peer name or contact name with spaces replaced by '_'
+   *
    * @param string $first_name
    *   Contact's first name, a single word.
    * @param string $lat_name
@@ -174,7 +174,59 @@ class TelegramClient {
   	  $contacts = $this->parseContactList();
   	  return reset($contacts);
   	}
-  	return TRUE;
+  	return NULL;
+  }
+
+  /**
+   * Get contact information
+   *
+   * @param string $peer
+   *   Peer name or contact name with spaces replaced by '_'
+   *
+   * @return TelegramContact|NULL
+   */
+  public function getContactInfo($peer){
+  	if ($this->execCommand('user_info', $peer)) {
+  	  // Response has the form
+  	  //   User Jose Reyero:
+      //   real name: Jose Reyero
+      //   phone: 34626472653
+      //   offline (was online [2014/03/17 19:32:33])
+  	  // Parse in 2 stages.
+  	  $pattern = array(
+  	    0 => '/^(User)\s([\w\s]+)\:$/u',
+  	    1 => '/^real\s(name)\:\s([\w\s]+)$/u',
+  	    2 => '/^(phone)\:\s(\d+)$/',
+  	  );
+  	  $mapping = array('line', 'type', 'data');
+  	  $info = $this->parseResponse($pattern, $mapping);
+  	  // If we get user data, parse second stage.
+  	  if ($info) {
+  	    $data = array();
+  	    foreach ($info as $item) {
+  	      $data[$item->type] = $item->data;
+  	    }
+  	    $contact = new TelegramContact($data);
+  	    // Now get status data.
+  	    $pattern = array(
+    	    3 => '/^(online)$/',
+    	    4 => '/^(offline)\s\(was\sonline\s\[([\d\/]+)\s([\d\:]+)\]\)/',
+    	  );
+    	  $mapping = array(
+    	    0 => 'line',
+    	    1 => 'status',
+    	    2 => 'date',
+    	    3 => 'time',
+    	  );
+    	  if ($status_data = $this->parseResponse($pattern, $mapping)) {
+    	    $status = reset($status_data);
+    	    unset($status->line);
+    	    $contact->setData($status);
+    	  }
+  	    return $contact;
+  	  }
+  	}
+  	return NULL;
   }
 
  /**

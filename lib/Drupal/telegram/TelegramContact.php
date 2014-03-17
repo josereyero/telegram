@@ -56,7 +56,7 @@ class TelegramContact extends TelegramData {
     parent::__construct($data);
     if (!isset($this->peer)) {
       if (isset($this->name)) {
-        $this->peer = static::nameToPeer($name);
+        $this->peer = static::nameToPeer($this->name);
       }
       elseif (isset($this->first_name) && isset($this->last_name)) {
         $this->setFullName($this->first_name, $this->last_name);
