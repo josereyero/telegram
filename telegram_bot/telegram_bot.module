@@ -1,0 +1,87 @@
+<?php
+
+/**
+ * Drupal Module: Telegram Bot
+ */
+
+use Drupal\telegram\TelegramBotInterface;
+use Drupal\telegram\TelegramBotManager;
+use Drupal\telegram\TelegramBot\TelegramBotWebhookInterface;
+
+/**
+ * Implements hook_menu().
+ */
+function telegram_bot_menu() {
+  $items['admin/config/telegram/bot'] = array(
+    'title' => 'Telegram Bot',
+    'description' => 'Configure Telegram',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('variable_group_form', 'telegram_bot_enabled'),
+    'access arguments' => array('administer site configuration'),
+  );
+  $items['admin/config/telegram/bot/enabled'] = array(
+    'title' => 'Enabled Bots',
+    'description' => 'Configure Telegram',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+  foreach (telegram_bot_manager()->getDefinitions() as $bot_id => $info) {
+    $items['admin/config/telegram/bot/' . $bot_id] = array(
+      'title' => $info['label'],
+      'type' => MENU_LOCAL_TASK,
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('variable_group_form', 'telegram_bot_' . $bot_id),
+      'access arguments' => array('administer site configuration'),
+    );
+  }
+  // Webhooks for Telegram Bots.
+  $items['telegram/bot/%/%'] = array(
+    'title' => 'Telegram Bot Webhook',
+    'page callback' => 'telegram_bot_webhook',
+    'access arguments' => TRUE,
+  );
+
+  return $items;
+}
+
+/**
+ * Gets the Telegram Bot Manager service.
+ *
+ * @return \Drupal\telegram\TelegramBotManager
+ */
+function telegram_bot_manager() {
+  return \Drupal::service('telegram_bot.manager');
+}
+
+/**
+ * Invoke cron on all bots.
+ */
+function telegram_bot_cron() {
+  $manager = telegram_bot_manager();
+  // No need to instantiate all bots, just the ones to run on cron.
+  foreach ($manager->getDefinitions() as $id => $info) {
+    if (telegram_bot_is_enabled($id) && in_array('\Drupal\telegram\TelegramBot\TelegramBotCronInterface', class_implements($info['class']))) {
+      telegram_bot_manager()->getTelegramBot($id)->invokeCron();
+    }
+  }
+}
+
+/**
+ * Page callback: Bot Webhooks.
+ */
+function telegram_bot_webhook($bot_id = NULL, $bot_key = NULL) {
+  $manager = telegram_bot_manager();
+  if ($bot_id && $manager->isBotEnabled($bot_id)) {
+    /* @var \Drupal\telegram\TelegramBot\TelegramBotWebhookInterface */
+    $bot = $manager->getTelegramBot($bot_id);
+    if ($bot && $bot instanceof TelegramBotWebhookInterface && $bot->validateKey($bot_key)) {
+      return $bot->invokeWebhook();
+    }
+    else {
+      drupal_access_denied();
+    }
+  }
+  else {
+    drupal_not_found();
+  }
+}
+

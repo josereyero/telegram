@@ -1,0 +1,5 @@
+name = Telegram Test Bot
+description = Provices two Telegram Test bots, one running on cron and one using a webhook. 
+core = 7.x
+package = Telegram
+dependencies[] = telegram_bot

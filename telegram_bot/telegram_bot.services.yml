@@ -1,0 +1,7 @@
+services:
+  telegram_bot.settings:
+    class: Drupal\telegram\TelegramSettings
+    arguments: ['telegram_bot_']
+  telegram_bot.manager:
+    class: Drupal\telegram\TelegramBotManager
+    arguments: ['@telegram_bot.settings', '@telegram.logger']
