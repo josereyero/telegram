@@ -1,0 +1,6 @@
+services:
+  telegram.client:
+    class: Drupal\telegram_cli\DrupalTelegramClient
+    arguments: ['@telegram.settings', '@telegram.logger']    
+    
+    

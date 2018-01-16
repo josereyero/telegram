@@ -12,8 +12,8 @@
  */
 
 use Drupal\telegram\TelegramLogger;
-use Drupal\telegram\TelegramProcess;
-use Drupal\telegram\DrupalTelegramClient;
+use Psr\Log\LoggerInterface;
+use Drupal\telegram\DrupalTelegramStorage;
 
 /**
  * Implements hook_menu().
@@ -32,7 +32,7 @@ function telegram_menu() {
      'title' => 'Settings',
      'description' => 'Configure Telegram',
      'page callback' => 'drupal_get_form',
-     'page arguments' => array('variable_module_form', 'telegram'),
+     'page arguments' => array('variable_group_form', 'telegram_settings'),
      'access arguments' => array('administer site configuration'),
    );
    $items['admin/config/telegram/test'] = array(
@@ -96,26 +96,27 @@ function telegram_instance() {
  * @return Drupal\telegram\TelegramClient
  */
 function telegram_client() {
-  $telegram = &drupal_static('telegram');
-  if (!isset($telegram['client'])) {
-    $logger = telegram_logger();
-    $process = new TelegramProcess(_telegram_params(), $logger);
-    $telegram['client'] =  new DrupalTelegramClient($process, $logger);
-  }
-  return $telegram['client'];
+  return \Drupal::service('telegram.client');
 }
 
 /**
- * Get Telegram logger.
+ * Get Telegram Logger service.
  *
- * @return Drupal\telegram\TelegramLogger
+ * @return Psr\Log\LoggerInterface
  */
 function telegram_logger() {
-  $telegram = &drupal_static('telegram');
-  if (!isset($telegram['logger'])) {
-    $telegram['logger'] = new TelegramLogger(_telegram_params());
-  }
-  return $telegram['logger'];
+  return \Drupal::service('telegram.logger');
+  //return \Drupal::service('logger.channel.telegram');
+  //return \Drupal::service('logger.factory')->get('telegram');
+}
+
+/**
+ * Get Telegram manager.
+ *
+ * @return DrupalTelegramStorage
+ */
+function telegram_storage() {
+  return \Drupal::service('telegram.storage');
 }
 
 /**
@@ -127,7 +128,6 @@ function _telegram_params() {
     'keyfile' => variable_get_value('telegram_command_key'),
     'homepath' => variable_get_value('telegram_command_cwd'),
     'configfile' => variable_get_value('telegram_config_path'),
-    'log_level' => variable_get_value('telegram_command_debug') ? 0 : 1,
-    'log_file' => variable_get_value('telegram_log_file'),
+    'debug' => variable_get_value('telegram_command_debug'),
   );
 }

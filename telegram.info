@@ -1,6 +1,5 @@
-name = Telegram
-description = Telegram
+name = Telegram CLI
+description = Experimental Integration with Telegram CLI
 core = 7.x
 package = Telegram
-dependencies[] = xautoload
-dependencies[] = variable
+dependencies[] = telegram

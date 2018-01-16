@@ -3,3 +3,4 @@ description = Telegram interface with persistent storage, queueing, etc...
 core = 7.x
 package = Telegram
 dependencies[] = telegram
+dependencies[] = service_container

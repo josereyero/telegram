@@ -5,11 +5,11 @@
  * Definition of Drupal/telegram/TelegramClient
  */
 
-namespace Drupal\telegram;
+namespace Drupal\telegram_cli;
 
 use Drupal\telegram\TelegramContact;
-use \streamWrapper;
-use \Exception;
+use Drupal\telegram\TelegramMessage;
+use Drupal\telegram\TelegramSettings;
 
 /**
  * Telegram Client
@@ -17,11 +17,11 @@ use \Exception;
 class TelegramClient {
 
   /**
-   * Running parameters to pass to the process.
+   * Settings to pass to the process.
    *
-   * @var array
+   * @var Drupal\telegram\TelegramSettings
    */
-  protected $params;
+  protected $settings;
 
   /**
    * Process wrapper
@@ -36,16 +36,40 @@ class TelegramClient {
   protected $logger;
 
   /**
+   * Telegram CLI Process
+   */
+  protected $process;
+
+  /**
    * Class constructor.
    *
-   * @var TelegramProcess $process
-   *   Mixed params
+   * @var TelegramSettings $settings
+   *   Telegram settings.
    * @var TelegramLogger $logger
    *   Logging interface.
    */
-  public function __construct($process, $logger) {
+  public function __construct($settings, $logger) {
     $this->process = $process;
     $this->logger = $logger;
+  }
+
+  /**
+   * Gets telegram process.
+   *
+   * @return \Drupal\telegram_cli\TelegramProcess
+   */
+  public function getProcess() {
+    if (!isset($this->process)) {
+      $params = [
+        'command' => $this->settings->get('command_exec'),
+        'keyfile' => $this->settings->get('command_key'),
+        'homepath' => $this->settings->get('command_cwd'),
+        'configfile' => $this->settings->get('config_path'),
+        'debug' => $this->settings->get('command_debug'),
+      ];
+      $this->process = new TelegramProcess($params, $this->logger);
+    }
+    return $this->process;
   }
 
   /**

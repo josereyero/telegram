@@ -59,7 +59,7 @@ function telegram_manager_menu() {
    );
    $items['admin/config/telegram/manager/contact/%telegram_manager_contact'] = array(
      'title' => 'Contact',
-     'description' => 'View contact list',
+     'description' => 'View contact',
      'page callback' => 'telegram_manager_contact_page',
      'page arguments' => array(5),
      'access arguments' => array('administer site configuration'),
@@ -84,9 +84,9 @@ function telegram_manager_menu() {
 }
 
 /**
- * Get Telegram manager.
+ * Get Telegram Manager service.
  *
- * @return DrupalTelegramManager
+ * @return \Drupal\telegram\DrupalTelegramManager
  */
 function telegram_manager() {
   $telegram = &drupal_static('telegram');

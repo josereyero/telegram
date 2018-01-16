@@ -5,7 +5,10 @@
  * Definition of Drupal/telegram/DrupalTelegram
  */
 
-namespace Drupal\telegram;
+namespace Drupal\telegram_cli;
+
+use Drupal\telegram\TelegramInterface;
+use Drupal\telegram\TelegramContact;
 
 /**
  * Drupal Telegram Client

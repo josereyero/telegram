@@ -8,43 +8,32 @@
  * Implements hook_variable_info().
  */
 function telegram_variable_info($options) {
+  $group = 'telegram_settings';
   $variables['telegram_site_number'] = array(
     'type' => 'string',
     'title' => t('Site phone number', array(), $options),
+    'group' => $group,
   );
   $variables['telegram_site_contact'] = array(
     'type' => 'string',
     'title' => t('Site contact name', array(), $options),
+    'group' => $group,
   );
-  $variables['telegram_command_exec'] = array(
-    'type' => 'string',
-    'title' => t('Executable command', array(), $options),
-    'default' => '/usr/local/bin/telegram',
-  );
-  $variables['telegram_command_key'] = array(
-    'type' => 'string',
-    'title' => t('Key file path', array(), $options),
-    'default' => '/etc/telegram/server.pub',
-  );
-  $variables['telegram_config_path'] = array(
-    'type' => 'string',
-    'title' => t('Configuration file path', array(), $options),
-    'default' => '/etc/telegram/telegram.conf',
-  );
-  $variables['telegram_command_cwd'] = array(
-    'type' => 'string',
-    'title' => t('Command cwd path', array(), $options),
-    'default' => '/home/telegram',
-  );
-  $variables['telegram_log_file'] = array(
-    'type' => 'string',
-    'title' => t('Optional log file', array(), $options),
-    'default' => '/tmp/drupal-telegram.log',
-  );
-  $variables['telegram_command_debug'] = array(
+  $variables['telegram_debug'] = array(
     'type' => 'enable',
     'title' => t('Debug mode', array(), $options),
     'default' => 0,
+    'group' => $group,
   );
   return $variables;
+}
+
+/**
+ * Implements hook_variable_group_info().
+ */
+function telegram_variable_group_info($options) {
+  $groups['telegram_settings'] = array(
+    'title' => t('Telegram settings', array(), $options),
+  );
+  return $groups;
 }

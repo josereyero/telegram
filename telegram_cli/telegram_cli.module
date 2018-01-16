@@ -1,0 +1,30 @@
+<?php
+
+/**
+ * Drupal module: Telegram CLI
+ */
+
+use Drupal\telegram_cli\DrupalTelegramClient;
+use Drupal\telegram_cli\TelegramProcess;
+
+/**
+ * Get Telegram client
+ *
+ * @return Drupal\telegram_cli\TelegramClient
+ */
+function telegram_cli_client() {
+  $telegram = &drupal_static('telegram');
+  if (!isset($telegram['client'])) {
+    $telegram['client'] =  new DrupalTelegramClient(telegram_cli_process(), telegram_logger());
+  }
+  return $telegram['client'];
+}
+
+/**
+ * Gets / creates a Telegram CLI Process
+ *
+ * @return \Drupal\telegram_cli\TelegramProcess
+ */
+function telegram_cli_process() {
+  return new TelegramProcess(_telegram_params(), telegram_logger());
+}
