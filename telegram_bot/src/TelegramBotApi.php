@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\telegram\TelegramBot;
+namespace Drupal\telegram_bot;
 
 use TelegramBot\Api\BotApi;
 use TelegramBot\Api\Types\Update;

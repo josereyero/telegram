@@ -96,7 +96,7 @@ function telegram_instance() {
  * @return Drupal\telegram\TelegramClient
  */
 function telegram_client() {
-  return \Drupal::service('telegram.client');
+  return telegram_service('telegram.client');
 }
 
 /**
@@ -105,9 +105,7 @@ function telegram_client() {
  * @return Psr\Log\LoggerInterface
  */
 function telegram_logger() {
-  return \Drupal::service('telegram.logger');
-  //return \Drupal::service('logger.channel.telegram');
-  //return \Drupal::service('logger.factory')->get('telegram');
+  return telegram_service('logger.channel.telegram');
 }
 
 /**
@@ -116,7 +114,21 @@ function telegram_logger() {
  * @return DrupalTelegramStorage
  */
 function telegram_storage() {
-  return \Drupal::service('telegram.storage');
+  return telegram_service('telegram.storage');
+}
+
+/**
+ * Wrapper around Drupal container services.
+ *
+ * @param string $name
+ */
+function telegram_service($name) {
+  try {
+    return \Drupal::service($name);
+  }
+  catch (\Exception $e) {
+    watchdog_exception('telegram', $e);
+  }
 }
 
 /**

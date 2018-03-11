@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\telegram\Annotation;
+namespace Drupal\telegram_bot\Annotation;
 
 use Drupal\Component\Annotation\Plugin;
 

@@ -2,7 +2,7 @@
 
 namespace Drupal\telegram_bot_test\Plugin\TelegramBot;
 
-use Drupal\telegram\Plugin\TelegramBot\TelegramWebhookBot;
+use Drupal\telegram_bot\Plugin\TelegramBot\TelegramWebhookBot;
 
 /**
  * Telegram Bot object implementing the Bot API.

@@ -1,0 +1,5 @@
+name: Telegram Test Bot
+description: Provices two Telegram Test bots, one running on cron and one using a webhook.
+package: Telegram
+type: module
+version: 1.0

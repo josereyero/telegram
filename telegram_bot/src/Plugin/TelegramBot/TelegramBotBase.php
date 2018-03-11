@@ -1,12 +1,13 @@
 <?php
 
-namespace Drupal\telegram\Plugin\TelegramBot;
+namespace Drupal\telegram_bot\Plugin\TelegramBot;
 
 use TelegramBot\Api\BotApi;
 use TelegramBot\Api\Client;
+
 use Drupal\Component\Plugin\PluginBase;
-use Drupal\telegram\TelegramBot\TelegramBotClient;
-use Drupal\telegram\TelegramBot\TelegramBotApi;
+use Drupal\telegram_bot\TelegramBotClient;
+use Drupal\telegram_bot\TelegramBotApi;
 
 /**
  * Telegram Bot object implementing the Bot API.
@@ -27,14 +28,14 @@ abstract class TelegramBotBase extends PluginBase {
   /**
    * The Telegram Bot Api
    *
-   * @var \Drupal\telegram\TelegramBot\TelegramBotApi
+   * @var \Drupal\telegram_bot\TelegramBotApi
    */
   protected $bot_api;
 
   /**
    * The Telegram Bot Client
    *
-   * @var \Drupal\telegram\TelegramBot\TelebramBotClient
+   * @var \Drupal\telegram_bot\TelebramBotClient
    */
   protected $bot_client;
 
@@ -67,7 +68,7 @@ abstract class TelegramBotBase extends PluginBase {
   /**
    * Gets the Bot Api
    *
-   * @return \Drupal\telegram\TelegramBot\TelegramBotApi
+   * @return \Drupal\telegram_bot\TelegramBotApi
    */
   public function getBotApi() {
     if (!isset($this->bot_api)) {

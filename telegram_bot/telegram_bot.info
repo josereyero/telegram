@@ -3,5 +3,5 @@ description = Telegram Bot API
 core = 7.x
 package = Telegram
 dependencies[] = telegram
-dependencies[] = service_container_symfony
-dependencies[] = service_container_annotation_discovery
+;dependencies[] = service_container_symfony
+;dependencies[] = service_container_annotation_discovery

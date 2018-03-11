@@ -1,7 +1,6 @@
-name = Telegram
+name = Telegram CLI
 description = Telegram
 core = 7.x
 package = Telegram
 dependencies[] = xautoload
 dependencies[] = variable
-dependencies[] = service_container

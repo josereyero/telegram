@@ -1,8 +1,8 @@
 <?php
 
-namespace Drupal\telegram\Plugin\TelegramBot;
+namespace Drupal\telegram_bot\Plugin\TelegramBot;
 
-use Drupal\telegram\TelegramBot\TelegramBotCronInterface;
+use Drupal\telegram_bot\TelegramBotCronInterface;
 use TelegramBot\Api\BotApi;
 use TelegramBot\Api\Types\Update;
 use TelegramBot\Api\Types\ArrayOfUpdates;

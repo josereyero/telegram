@@ -1,0 +1,5 @@
+name: Telegram
+description: Telegram Base API
+package: Telegram
+type: module
+version: 1.0

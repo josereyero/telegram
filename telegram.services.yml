@@ -1,6 +1,7 @@
 services:
-  # This is not working because of a service_container bug that prevents
-  # services defined in yml from use the ones in the default container services.
+  logger.channel.telegram:
+    parent: logger.channel_base
+    arguments: ['teletram']
   #logger.channel.telegram:
   #  class: Drupal\service_container\Logger\LoggerChannel
   #  factory: ['Drupal\telegram\TelegramLogger', 'create']

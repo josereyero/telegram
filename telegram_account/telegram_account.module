@@ -76,11 +76,13 @@ function telegram_account_permission() {
  * Implements hook_user_load().
  */
 function telegram_account_user_load($users) {
-  $conditions = array('uid' => array_keys($users));
-  $contacts = telegram_storage()->contactLoadMultiple($conditions);
+  if ($storage = telegram_storage()) {
+    $conditions = array('uid' => array_keys($users));
+    $contacts = $storage->contactLoadMultiple($conditions);
 
-  foreach ($contacts as $contact) {
-    $users[$contact->uid]->telegram = $contact;
+    foreach ($contacts as $contact) {
+      $users[$contact->uid]->telegram = $contact;
+    }
   }
 }
 

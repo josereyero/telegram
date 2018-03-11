@@ -1,5 +1,5 @@
-name = Telegram CLI
-description = Experimental Integration with Telegram CLI
+name = Telegram
+description = Telegram Messenger base module
 core = 7.x
 package = Telegram
-dependencies[] = telegram
+dependencies[] = backport

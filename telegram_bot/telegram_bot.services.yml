@@ -3,5 +3,10 @@ services:
     class: Drupal\telegram\TelegramSettings
     arguments: ['telegram_bot_']
   telegram_bot.manager:
-    class: Drupal\telegram\TelegramBotManager
-    arguments: ['@telegram_bot.settings', '@telegram.logger']
+    class: Drupal\telegram_bot\TelegramBotManager
+    arguments:
+      - '@container.namespaces'
+      - '@cache.discovery'
+      - '@module_handler'
+      - '@telegram_bot.settings'
+      - '@logger.channel.telegram'

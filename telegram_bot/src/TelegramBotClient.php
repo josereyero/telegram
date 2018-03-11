@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\telegram\TelegramBot;
+namespace Drupal\telegram_bot;
 
 use TelegramBot\Api\BotApi;
 use TelegramBot\Api\Client;
@@ -18,7 +18,7 @@ class TelegramBotClient extends Client {
   /**
    * Client constructor
    *
-   * @param \Drupal\telegram\TelegramBot\TelegramBotApi $api
+   * @param \Drupal\telegram_bot\TelegramBotApi $api
    *   Telegram Bot API
    * @param string $token Telegram Bot API token
    * @param string|null $trackerToken Yandex AppMetrica application api_key

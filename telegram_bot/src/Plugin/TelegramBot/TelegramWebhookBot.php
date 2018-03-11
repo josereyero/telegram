@@ -1,8 +1,8 @@
 <?php
 
-namespace Drupal\telegram\Plugin\TelegramBot;
+namespace Drupal\telegram_bot\Plugin\TelegramBot;
 
-use Drupal\telegram\TelegramBot\TelegramBotWebhookInterface;
+use Drupal\telegram_bot\TelegramBotWebhookInterface;
 
 use TelegramBot\Api\BotApi;
 use TelegramBot\Api\Types\Update;

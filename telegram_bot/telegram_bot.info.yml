@@ -1,0 +1,5 @@
+name: Telegram Bot
+description: Telegram Bot Base API
+package: Telegram
+type: module
+version: 1.0

@@ -1,13 +1,16 @@
 <?php
 
-namespace Drupal\telegram;
+namespace Drupal\telegram_bot;
 
 use Psr\Log\LoggerInterface;
 use Drupal\telegram\TelegramSettings;
 
-use Drupal\service_container\Plugin\DefaultPluginManager;
-use Drupal\service_container_annotation_discovery\Plugin\Discovery\AnnotatedClassDiscovery;
+use Drupal\Core\Plugin\DefaultPluginManager;
+use Drupal\Component\Annotation\Plugin\Discovery\AnnotatedClassDiscovery;
 use Drupal\Component\Plugin\Exception\PluginNotFoundException;
+use Drupal\Core\Extension\ModuleHandlerInterface;
+use Drupal\Core\Cache\CacheBackendInterface;
+use Drupal\Component\Plugin\Factory\DefaultFactory;
 
 /**
  * Telegram Bot Manager
@@ -50,13 +53,35 @@ class TelegramBotManager extends DefaultPluginManager {
    * @var \Psr\Log\LoggerInterface $logger
    *   The Telegram Logger.
    */
-  public function __construct(TelegramSettings $settings, LoggerInterface $logger) {
-    parent::__construct(new AnnotatedClassDiscovery([
-      'directory' => 'Plugin/TelegramBot',
-      'class' => 'Drupal\telegram\Annotation\TelegramBot'
-    ]));
+  public function __construct(\Traversable $namespaces, CacheBackendInterface $cache_backend, ModuleHandlerInterface $module_handler, TelegramSettings $settings, LoggerInterface $logger) {
+    parent::__construct(
+      'Plugin/TelegramBot',
+      $namespaces,
+      $module_handler,
+      'Drupal\telegram_bot\TelegramBotInterface', //NULL, // @todo Interface
+      'Drupal\telegram_bot\Annotation\TelegramBot'
+    );
+
+    //$this->alterInfo('telegram_bot');
+    $this->setCacheBackend($cache_backend, 'telegram_bot');
+    $this->factory = new DefaultFactory($this->getDiscovery());
+
     $this->settings = $settings;
     $this->logger = $logger;
+  }
+
+  /**
+   * Debug: getDiscovery.
+   */
+  public function getDiscovery() {
+    return parent::getDiscovery();
+  }
+
+  /**
+   * Debug: Finds plugin definitions.
+   */
+  public function findDefinitions() {
+    return parent::findDefinitions();
   }
 
   /**
