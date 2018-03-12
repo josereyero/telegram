@@ -108,10 +108,12 @@ class TelegramBotManager extends DefaultPluginManager {
   }
 
   /**
-   * Check whether a specific bot is enabled.
+   * Get object storage.
+   *
+   * @return \Drupal\telegram\Storage\TelegramObjectStorage
    */
-  public function isBotEnabled($id) {
-    return $this->settings->get($id . '_enable');
+  public function getObjectStorage() {
+    return \Drupal::service('telegram.object_storage');
   }
 
   /**

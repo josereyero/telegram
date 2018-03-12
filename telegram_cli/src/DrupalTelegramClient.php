@@ -77,7 +77,7 @@ class DrupalTelegramClient extends TelegramClient implements TelegramInterface {
         $this->lock = TRUE;
       }
       else {
-        $this->logger->logInfo('Drupal. Waiting for lock to be available (15 seconds)');
+        $this->logger->info('Drupal. Waiting for lock to be available (15 seconds)');
         $this->lock = lock_wait('telegram_client', 15);
       }
     }

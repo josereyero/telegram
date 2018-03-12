@@ -31,7 +31,7 @@ class TelegramProcess {
   protected $timeout;
 
   /**
-   * @var \Drupal\telegram\TelegramLogger
+   * @var \Psr\Log\LoggerInterface
    */
   protected $logger;
 
@@ -40,7 +40,7 @@ class TelegramProcess {
    *
    * @param array $params
    *   Mixed process parameters.
-   * @param TelegramLogger $logger
+   * @param \Psr\Log\LoggerInterface $logger
    *   Logging interface.
    */
   public function __construct(array $params, LoggerInterface $logger) {

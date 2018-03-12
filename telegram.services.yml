@@ -2,16 +2,11 @@ services:
   logger.channel.telegram:
     parent: logger.channel_base
     arguments: ['teletram']
-  #logger.channel.telegram:
-  #  class: Drupal\service_container\Logger\LoggerChannel
-  #  factory: ['Drupal\telegram\TelegramLogger', 'create']
-  #  factory: '@logger.factory:get'
-  #  arguments: ['telegram']
-  telegram.logger:
-    class: Drupal\telegram\TelegramLogger
-    arguments: ['telegram']
   telegram.storage:
     class: Drupal\telegram\DrupalTelegramStorage
   telegram.settings:
     class: Drupal\telegram\TelegramSettings
     arguments: ['telegram_']
+  telegram.object_storage:
+    class: Drupal\telegram\Storage\TelegramObjectStorage
+    

@@ -31,7 +31,7 @@ class TelegramClient {
   protected $process;
 
   /**
-   * @var TelegramLogger
+   * @var \Psr\Log\LoggerInterface
    */
   protected $logger;
 
@@ -43,9 +43,9 @@ class TelegramClient {
   /**
    * Class constructor.
    *
-   * @var TelegramSettings $settings
+   * @param TelegramSettings $settings
    *   Telegram settings.
-   * @var TelegramLogger $logger
+   * @param \Psr\Log\LoggerInterface $logger
    *   Logging interface.
    */
   public function __construct($settings, $logger) {
@@ -371,7 +371,7 @@ class TelegramClient {
   /**
    * Get logger.
    *
-   * @return TelegramLogger
+   * @return \Psr\Log\LoggerInterface
    */
   function getLogger() {
     return $this->logger;
@@ -404,7 +404,7 @@ class TelegramClient {
    * Shorthand for debug message.
    */
   protected function debug($message, $args = NULL) {
-    $this->logger->logDebug($message, $args);
+    $this->logger->debug($message, $args);
   }
 
   /**
@@ -413,14 +413,14 @@ class TelegramClient {
    * @param mixed $message
    */
   protected function log($message, $args = NULL) {
-    $this->logger->logInfo($message, $args);
+    $this->logger->info($message, $args);
   }
 
   /**
    * Get logged messages.
    */
   function getLogs() {
-    return $this->logger->formatLogs();
+    return array();
   }
 
   /**

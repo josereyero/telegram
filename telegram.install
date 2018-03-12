@@ -240,6 +240,86 @@ function telegram_schema() {
     'primary key' => array('oid'),
   );
 
+  $schema['telegram_object'] = array(
+      'description' => "Stores Telegram objects in json_format.",
+      'fields' => array(
+          'oid' => array(
+              'description' => 'The primary internal identifier for an object.',
+              'type' => 'serial',
+              'unsigned' => TRUE,
+              'not null' => TRUE,
+          ),
+          'type' => array(
+              'description' => "Object type.",
+              'type' => 'varchar',
+              'length' => 50,
+              'not null' => TRUE,
+          ),
+          'id' => array(
+              'description' => "Telegram's numeric identifier for the object.",
+              'type' => 'int',
+              'not null' => FALSE,
+          ),
+          'name' => array(
+              'description' => "Telegram's string identifier for the object.",
+              'type' => 'varchar',
+              'length' => 200,
+              'not null' => FALSE,
+          ),
+          'data' => array(
+              'description' => 'Object data in json format.',
+              'mysql_type' => 'JSON',
+              'type' => 'json',
+          ),
+          'created' => array(
+              'description' => "A UNIX timestamp indicating when the object was created.",
+              'type' => 'int',
+              'not null' => TRUE,
+              'default' => 0,
+          ),
+          'updated' => array(
+              'description' => "A UNIX timestamp marking when this object was updated.",
+              'type' => 'int',
+              'not null' => TRUE,
+              'default' => 0,
+          ),
+      ),
+      'primary key' => array('oid'),
+      'indexes' => array(
+         'type_id' => array('type', 'id'),
+         'type_name' => array('type', 'name'),
+      ),
+  );
+
+  $schema['telegram_object_owner'] = array(
+      'description' => "Stores Telegram object owners.",
+      'fields' => array(
+          'oid' => array(
+              'description' => 'The primary internal identifier for an object.',
+              'type' => 'int',
+              'unsigned' => TRUE,
+              'not null' => TRUE,
+          ),
+          'owner' => array(
+              'description' => "Owner name, like 'bot:bot_id'.",
+              'type' => 'varchar',
+              'length' => 100,
+              'not null' => TRUE,
+          ),
+      ),
+      'primary key' => array('oid', 'owner'),
+  );
+
   return $schema;
+}
+
+/**
+ * Create telegram_object table.
+ */
+function telegram_update_7001() {
+  $table = drupal_get_schema('telegram_object', TRUE);
+  db_create_table('telegram_object', $table);
+  $table = drupal_get_schema('telegram_object_owner');
+  db_create_table('telegram_object_owner', $table);
 }
 

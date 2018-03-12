@@ -19,11 +19,7 @@ define('TELEGRAM_KEYFILE', '/etc/telegram/server.pub');
 define('TELEGRAM_CONFIG', '/etc/telegram/telegram.conf');
 define('TELEGRAM_HOMEPATH', '/home/telegram');
 
-// Log level (0 = Debug, 1 = Info, 2 = Notice, 3 = Warning, 4 = Error)
-define('TELEGRAM_LOGLEVEL', 1);
-define('TELEGRAM_LOGFILE', '/tmp/telegram.log');
 
-use Drupal\telegram\TelegramLogger;
 use Drupal\telegram\TelegramProcess;
 use Drupal\telegram\TelegramClient;
 
@@ -44,11 +40,9 @@ function telegram_create_client($params = array()) {
       'keyfile' => TELEGRAM_KEYFILE,
       'configfile' => TELEGRAM_CONFIG,
       'homepath' => TELEGRAM_HOMEPATH,
-      'log_level' => TELEGRAM_LOGLEVEL,
-      'log_file' => TELEGRAM_LOGFILE,
   );
 
-  $logger = new TelegramLogger($params);
+  $logger = telegram_logger();
   $process = new TelegramProcess($params, $logger);
   return new TelegramClient($process, $logger);
 }

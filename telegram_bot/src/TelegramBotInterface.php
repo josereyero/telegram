@@ -7,4 +7,20 @@ namespace Drupal\telegram_bot;
  */
 interface TelegramBotInterface {
 
+  /**
+   * Invoke cron
+   */
+  public function invokeCron();
+
+  /**
+   * Process webhook callback.
+   */
+  public function invokeWebhook();
+
+  /**
+   * Validate Webhook token.
+   */
+  public function validateKey($token);
+
+
 }

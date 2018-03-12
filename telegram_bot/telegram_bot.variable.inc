@@ -10,17 +10,21 @@
 function telegram_bot_variable_info($options) {
   $variables = array();
   if ($manager = telegram_bot_manager()) {
+    $bots = array();
     foreach ($manager->getDefinitions() as $id => $info) {
+      $bots[$id] = $info['label'];
       $group = 'telegram_bot_' . $id;
-      $variables[$group . '_enable'] = array(
+      /*
+      $variables[$group . '_enable_cron'] = array(
         'type' => 'boolean',
         'default' => FALSE,
         'title' => $info['label'],
         'group' => 'telegram_bot_enabled',
       );
+      */
       $variables[$group . '_name'] = array(
         'type' => 'string',
-        'title' => t('Bot name', array(), $options),
+        'title' => t('Bot user name', array(), $options),
         'group' => $group,
       );
       $variables[$group . '_token'] = array(
@@ -29,6 +33,19 @@ function telegram_bot_variable_info($options) {
         'group' => $group,
       );
     }
+
+    $variables['telegram_bot_enabled_cron'] = array(
+      'title' => t('Enable cron', array(), $options),
+      'type' => 'options',
+      'options' => $bots,
+      'group' => 'telegram_bot_enabled',
+    );
+    $variables['telegram_bot_enabled_webhook'] = array(
+      'title' => t('Enable webhook', array(), $options),
+      'type' => 'options',
+      'options' => $bots,
+      'group' => 'telegram_bot_enabled',
+    );
   }
   return $variables;
 }

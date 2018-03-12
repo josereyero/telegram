@@ -31,7 +31,7 @@ class TelegramBotApi extends BotApi {
   public function __construct($token, $trackerToken = null, $settings = array()) {
     parent::__construct($token, $trackerToken);
 
-    $this->last_update_id = $this->getSetting('last_update_id');
+    //$this->last_update_id = $this->getSetting('last_update_id');
   }
 
   /**
@@ -56,7 +56,7 @@ class TelegramBotApi extends BotApi {
         'offset' => $offset,
         'limit' => $limit,
         'timeout' => $timeout,
-        'allowed_updates' => $allowed_updates,
+        //'allowed_updates' => $allowed_updates,
     ]));
   }
 

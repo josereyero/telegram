@@ -26,5 +26,18 @@ function telegram_cli_client() {
  * @return \Drupal\telegram_cli\TelegramProcess
  */
 function telegram_cli_process() {
-  return new TelegramProcess(_telegram_params(), telegram_logger());
+  return new TelegramProcess(_telegram_cli_params(), telegram_logger());
+}
+
+/**
+ * Get configuration as array.
+ */
+function _telegram_cli_params() {
+  return array(
+      'command' => variable_get_value('telegram_command_exec'),
+      'keyfile' => variable_get_value('telegram_command_key'),
+      'homepath' => variable_get_value('telegram_command_cwd'),
+      'configfile' => variable_get_value('telegram_config_path'),
+      'debug' => variable_get_value('telegram_command_debug'),
+  );
 }
